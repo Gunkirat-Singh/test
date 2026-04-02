@@ -87,7 +87,7 @@ body.is-paused .live-pill{border-color:var(--dim);color:var(--muted);background:
 .mp3-badge{display:flex;align-items:center;gap:5px;padding:3px 12px;border-radius:20px;background:var(--accent-dim);border:0.5px solid color-mix(in srgb,var(--accent) 35%,transparent);font-size:9px;font-weight:600;color:var(--accent);letter-spacing:0.1em;align-self:center}
 .mp3-dot{width:5px;height:5px;border-radius:50%;background:var(--accent2);animation:blink 1.2s ease-in-out infinite}
 .mp3-src-note{font-size:9px;color:var(--muted);text-align:center;line-height:1.35;max-width:100%}
-.mp3-title-card{width:100%;max-width:320px;min-height:104px;border-radius:12px;background:linear-gradient(145deg,color-mix(in srgb,var(--accent) 12%,var(--bg3)),var(--bg3));border:1px solid color-mix(in srgb,var(--accent) 28%,transparent);display:flex;align-items:center;justify-content:center;padding:18px 20px;box-shadow:0 0 24px color-mix(in srgb,var(--accent) 15%,transparent),inset 0 1px 0 color-mix(in srgb,var(--text) 6%,transparent);position:relative;align-self:center}
+.mp3-title-card{width:100%;max-width:320px;min-height:104px;border-radius:12px;background:linear-gradient(145deg,color-mix(in srgb,var(--accent) 12%,var(--bg3)),var(--bg3));border:1px solid color-mix(in srgb,var(--accent) 28%,transparent);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:18px 20px;box-shadow:0 0 24px color-mix(in srgb,var(--accent) 15%,transparent),inset 0 1px 0 color-mix(in srgb,var(--text) 6%,transparent);position:relative;align-self:center}
 .mp3-title-card .mp3-title-big{font-size:clamp(15px,3.2vw,22px);font-weight:700;color:var(--text);text-align:center;line-height:1.3;word-break:break-word}
 .mp3-info{text-align:center}
 .mp3-title{font-size:14px;font-weight:700;color:#fff;margin-bottom:3px;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-left:auto;margin-right:auto}
@@ -222,6 +222,7 @@ body.is-paused .live-pill{border-color:var(--dim);color:var(--muted);background:
 </style>
 </head>
 <body>
+<audio id="audioPlayer" preload="metadata" crossorigin="anonymous" style="display:none"></audio>
 <div class="ambient"><div class="amb-r"></div><div class="amb-g"></div><div class="amb-b"></div></div>
 <div class="wrap" id="appWrap">
 
@@ -253,8 +254,9 @@ body.is-paused .live-pill{border-color:var(--dim);color:var(--muted);background:
       <div id="ytPlayer"></div>
       <div class="mp3-overlay" id="mp3Overlay">
         <div class="mp3-badge"><div class="mp3-dot"></div>Audio-only mode</div>
-        <p class="mp3-src-note">Video is hidden; playback uses the same YouTube playlist so play, pause, seek, and ±10s work. The card below shows the current song title.</p>
+        <p class="mp3-src-note" id="mp3SrcNote">Audio is streamed from your <strong>local server</strong> (YouTube audio via ytdl — no iframe ads). Run <code>npm start</code> in <code>vibe-station-server</code> and open this page from that server. Optional Spotify artwork uses the Spotube-style metadata API when credentials are set.</p>
         <div class="mp3-title-card" id="mp3TitleCard">
+          <img id="mp3Art" alt="" width="120" height="120" style="display:none;width:120px;height:120px;border-radius:10px;object-fit:cover;border:1px solid color-mix(in srgb,var(--accent) 25%,transparent);box-shadow:0 8px 24px rgba(0,0,0,0.4)">
           <div class="mp3-title-big" id="mp3TitleBig">Select a track</div>
         </div>
         <div class="mp3-info">
@@ -411,6 +413,16 @@ body.is-paused .live-pill{border-color:var(--dim);color:var(--muted);background:
       <p class="settings-hint">Surfaces tints panel backgrounds slightly lighter or darker.</p>
     </div>
 
+    <div class="settings-section">
+      <span class="settings-label">Spotube-style stream</span>
+      <div class="settings-row" style="flex-direction:column;align-items:stretch">
+        <label for="streamBaseUrl">Stream server base URL</label>
+        <input type="text" id="streamBaseUrl" placeholder="Leave empty if page is served from same server (e.g. http://localhost:3000)" style="width:100%;font-size:11px;padding:8px 10px;border-radius:8px;border:0.5px solid var(--border);background:var(--bg2);color:var(--text);font-family:inherit" onchange="saveStreamBase(); testStreamHealth()">
+        <p class="settings-hint" style="margin-top:8px">Empty = same origin. If you open the HTML file directly, use <code>http://localhost:3000</code> (or your server port). MP3 mode needs the Node server for full-length audio.</p>
+        <div id="streamHealth" style="font-size:10px;margin-top:6px;color:var(--muted)"></div>
+      </div>
+    </div>
+
     <div class="settings-actions">
       <button type="button" class="settings-btn" onclick="resetSettings()">Reset all</button>
       <button type="button" class="settings-btn primary" onclick="closeSettings()">Done</button>
@@ -421,6 +433,124 @@ body.is-paused .live-pill{border-color:var(--dim);color:var(--muted);background:
 <script src="https://www.youtube.com/iframe_api"></script>
 <script>
 const PL_ID = 'PLuXBepVDtfVDfj6bYU3jb5f0bdqE-ljVU';
+
+function getStreamBase() {
+  let b = localStorage.getItem('vibeStreamBase');
+  if (b === null) b = '';
+  b = String(b).trim();
+  if (b === '') {
+    if (window.location.protocol === 'file:') {
+      return 'http://localhost:3000';
+    }
+    return '';
+  }
+  return b.replace(/\/$/, '');
+}
+
+function saveStreamBase() {
+  const v = document.getElementById('streamBaseUrl').value.trim();
+  localStorage.setItem('vibeStreamBase', v);
+  saveSettings();
+  testStreamHealth();
+}
+
+function streamUrlForVideo(videoId) {
+  return getStreamBase() + '/api/stream/' + encodeURIComponent(videoId);
+}
+
+let streamServerOk = false;
+
+async function testStreamHealth() {
+  const el = document.getElementById('streamHealth');
+  if (!el) return;
+  el.textContent = 'Checking stream server…';
+  try {
+    const r = await fetch(getStreamBase() + '/api/health', { method: 'GET' });
+    const j = r.ok ? await r.json() : null;
+    streamServerOk = !!(r.ok && j && j.ok);
+    el.textContent = streamServerOk
+      ? ('✓ Stream server OK' + (j.spotify ? ' · Spotify metadata enabled' : ''))
+      : '✗ Stream server not reachable — start the Node server for MP3 mode';
+    el.style.color = streamServerOk ? 'var(--green)' : 'var(--muted)';
+  } catch (e) {
+    streamServerOk = false;
+    el.textContent = '✗ Cannot reach stream server (MP3 needs npm start in vibe-station-server)';
+    el.style.color = 'var(--muted)';
+  }
+}
+
+function pauseYtForMp3() {
+  if (player && playerReady) {
+    try {
+      player.setVolume(0);
+      player.pauseVideo();
+    } catch (e) {}
+  }
+}
+
+function stopMp3Audio() {
+  const audio = document.getElementById('audioPlayer');
+  if (!audio) return;
+  audio.pause();
+  audio.removeAttribute('src');
+  try { audio.load(); } catch (e) {}
+}
+
+async function trySpotifyArtwork(t) {
+  if (mode !== 'mp3' || !t) return;
+  const art = document.getElementById('mp3Art');
+  if (!art) return;
+  const q = (t.title || '').trim() + ' ' + (t.ch || '').trim();
+  if (!q.trim()) return;
+  try {
+    const r = await fetch(getStreamBase() + '/api/spotify/metadata?' + new URLSearchParams({ q: q.slice(0, 200) }));
+    const d = await r.json();
+    if (d.image) {
+      art.src = d.image;
+      art.style.display = 'block';
+    } else {
+      art.removeAttribute('src');
+      art.style.display = 'none';
+    }
+  } catch (e) {
+    art.style.display = 'none';
+  }
+}
+
+function loadMp3Stream(autoplay) {
+  const t = tracks[cur];
+  if (!t) return;
+  const audio = document.getElementById('audioPlayer');
+  audio.pause();
+  audio.src = streamUrlForVideo(t.videoId);
+  audio.volume = vol / 100;
+  if (autoplay) audio.play().catch(() => {});
+  trySpotifyArtwork(t);
+  startProg();
+}
+
+function wireAudioPlayer() {
+  const audio = document.getElementById('audioPlayer');
+  if (!audio || audio._wired) return;
+  audio._wired = true;
+  audio.addEventListener('play', () => {
+    if (mode === 'mp3') setPlaying(true);
+  });
+  audio.addEventListener('pause', () => {
+    if (mode === 'mp3') setPlaying(false);
+  });
+  audio.addEventListener('ended', () => {
+    if (mode !== 'mp3') return;
+    setPlaying(false);
+    stopProg();
+    if (isRepeat) {
+      audio.currentTime = 0;
+      audio.play().catch(() => {});
+    } else {
+      skipForward();
+    }
+  });
+}
 
 let player = null;
 let tracks = [];
@@ -567,6 +697,8 @@ function resetSettings() {
 const LS = 'vibeStationSettings';
 function saveSettings() {
   try {
+    const sbEl = document.getElementById('streamBaseUrl');
+    if (sbEl) localStorage.setItem('vibeStreamBase', sbEl.value.trim());
     localStorage.setItem(LS, JSON.stringify({
       preset: document.getElementById('themePreset').value,
       colorA: document.getElementById('themeColorA').value,
@@ -602,6 +734,8 @@ function loadSettings() {
     applyThemeColors();
     applyDisplayTuning();
     applySurfaceBoost();
+    const sb = document.getElementById('streamBaseUrl');
+    if (sb) sb.value = localStorage.getItem('vibeStreamBase') || '';
     return true;
   } catch (e) {
     return false;
@@ -670,6 +804,7 @@ function onYouTubeIframeAPIReady() {
 function onPlayerReady() {
   playerReady = true;
   player.setVolume(vol);
+  if (mode === 'mp3') pauseYtForMp3();
   setTimeout(() => {
     const ids = player.getPlaylist();
     if (ids && ids.length > 0) buildTracksFromIds(ids);
@@ -684,6 +819,7 @@ function onPlayerReady() {
 }
 
 function onStateChange(e) {
+  if (mode === 'mp3') return;
   const S = YT.PlayerState;
   if (e.data === S.PLAYING) {
     setPlaying(true);
@@ -705,6 +841,7 @@ function onPlayerError() {
 }
 
 function syncIndex() {
+  if (mode === 'mp3') return;
   if (!player || !playerReady) return;
   const idx = player.getPlaylistIndex();
   if (idx >= 0 && idx !== cur) {
@@ -812,6 +949,11 @@ function playTrack(idx) {
   renderList();
   scrollToActive();
   updateStrip();
+  if (mode === 'mp3') {
+    loadMp3Stream(true);
+    pauseYtForMp3();
+    return;
+  }
   if (!player || !playerReady) return;
   player.playVideoAt(idx);
 }
@@ -836,6 +978,18 @@ function updateStrip() {
 }
 
 function togglePlay() {
+  if (mode === 'mp3') {
+    const audio = document.getElementById('audioPlayer');
+    if (!tracks.length) return;
+    if (!audio.src) {
+      loadMp3Stream(true);
+      pauseYtForMp3();
+      return;
+    }
+    if (audio.paused) audio.play().catch(() => {});
+    else audio.pause();
+    return;
+  }
   if (!player || !playerReady) return;
   if (isPlaying) player.pauseVideo();
   else player.playVideo();
@@ -874,8 +1028,12 @@ function skipForward() {
 }
 
 function seekRel(s) {
-  if (!player || !playerReady) return;
-  player.seekTo(Math.max(0, (player.getCurrentTime() || 0) + s), true);
+  if (mode === 'mp3') {
+    const audio = document.getElementById('audioPlayer');
+    if (!audio || !audio.src) return;
+    audio.currentTime = Math.max(0, (audio.currentTime || 0) + s);
+  } else if (!player || !playerReady) return;
+  else player.seekTo(Math.max(0, (player.getCurrentTime() || 0) + s), true);
   const btn = s > 0 ? document.getElementById('seekFwdBtn') : document.getElementById('seekBackBtn');
   btn.style.color = 'var(--accent)';
   btn.style.borderColor = 'currentColor';
@@ -883,9 +1041,17 @@ function seekRel(s) {
 }
 
 function seekClick(e) {
-  if (!player || !playerReady) return;
   const rect = e.currentTarget.getBoundingClientRect();
   const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+  if (mode === 'mp3') {
+    const audio = document.getElementById('audioPlayer');
+    if (!audio || !audio.src) return;
+    const d = audio.duration;
+    if (!isFinite(d) || d <= 0) return;
+    audio.currentTime = pct * d;
+    return;
+  }
+  if (!player || !playerReady) return;
   player.seekTo(pct * (player.getDuration() || 0), true);
 }
 
@@ -894,6 +1060,11 @@ function volClick(e) {
   vol = Math.round(Math.max(0, Math.min(100, (e.clientX - rect.left) / rect.width * 100)));
   document.getElementById('volFill').style.width = vol + '%';
   document.getElementById('volIcon').textContent = vol === 0 ? '🔇' : vol < 40 ? '🔉' : '🔊';
+  if (mode === 'mp3') {
+    const audio = document.getElementById('audioPlayer');
+    if (audio) audio.volume = vol / 100;
+    return;
+  }
   if (player && playerReady) player.setVolume(vol);
 }
 
@@ -914,6 +1085,16 @@ function openYT() {
 function startProg() {
   stopProg();
   progTimer = setInterval(() => {
+    if (mode === 'mp3') {
+      const audio = document.getElementById('audioPlayer');
+      if (!audio || !audio.src) return;
+      const c = audio.currentTime || 0;
+      const d = audio.duration || 0;
+      document.getElementById('progFill').style.width = (isFinite(d) && d > 0 ? c / d * 100 : 0) + '%';
+      document.getElementById('timeNow').textContent = fmt(c);
+      document.getElementById('timeTot').textContent = isFinite(d) && d > 0 ? fmt(d) : '—';
+      return;
+    }
     if (!player || !playerReady) return;
     const c = player.getCurrentTime() || 0;
     const d = player.getDuration() || 0;
@@ -943,18 +1124,37 @@ function setMode(m) {
   document.getElementById('mp3Overlay').classList.toggle('show', isMP3);
   document.getElementById('modeTag').textContent = isMP3 ? 'MP3' : 'MP4';
   document.getElementById('modeTag').className = 'tag ' + (isMP3 ? 'tag-b' : 'tag-gr');
-  document.getElementById('modeHint').textContent = isMP3 ? '🎵 Audio-only (same playlist · controls work)' : '🎬 Video mode';
+  document.getElementById('modeHint').textContent = isMP3
+    ? '🎵 Audio streamed via server (Spotube-style)'
+    : '🎬 Video mode';
   document.getElementById('statMode').textContent = isMP3 ? 'MP3 🎵' : 'MP4 🎬';
   buildAudioViz();
   updateStrip();
-  if (player && playerReady) {
-    player.playVideoAt(cur);
-    if (wasPlaying) {
-      player.playVideo();
-      startProg();
-    } else {
-      player.pauseVideo();
+  if (isMP3) {
+    if (player && playerReady) pauseYtForMp3();
+    if (tracks.length) loadMp3Stream(!!wasPlaying);
+    else {
+      stopMp3Audio();
+      setPlaying(false);
       stopProg();
+    }
+  } else {
+    stopMp3Audio();
+    const art = document.getElementById('mp3Art');
+    if (art) {
+      art.removeAttribute('src');
+      art.style.display = 'none';
+    }
+    if (player && playerReady) {
+      player.setVolume(vol);
+      player.playVideoAt(cur);
+      if (wasPlaying) {
+        player.playVideo();
+        startProg();
+      } else {
+        player.pauseVideo();
+        stopProg();
+      }
     }
   }
   renderList();
@@ -1026,6 +1226,12 @@ if (!loadSettings()) {
   applyDisplayTuning();
   applySurfaceBoost();
 }
+(function initStreamUi() {
+  const sb = document.getElementById('streamBaseUrl');
+  if (sb) sb.value = localStorage.getItem('vibeStreamBase') || '';
+  wireAudioPlayer();
+  testStreamHealth();
+})();
 </script>
 </body>
 </html>
