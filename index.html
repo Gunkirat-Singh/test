@@ -455,7 +455,6 @@ input:checked + .slider:before {transform: translateX(16px);}
 <script>
 const PL_ID = 'PLuXBepVDtfVDfj6bYU3jb5f0bdqE-ljVU';
 
-// Decentralized APIs
 const PIPED_INSTANCES = [
   'https://pipedapi.kavin.rocks',
   'https://pipedapi.smnz.de',
@@ -479,14 +478,13 @@ let usingYtFallback = false;
 
 // --- FAST PARALLEL API CHECKING ---
 async function getFastestPipedStreamUrl(videoId) {
-  // We fire all APIs at once and race them. First to return a valid URL wins.
   const promises = PIPED_INSTANCES.map(api => {
     return new Promise((resolve, reject) => {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => {
         controller.abort();
         reject(new Error('Timeout'));
-      }, 3000); // 3 second max wait per request
+      }, 3000); 
       
       fetch(`${api}/streams/${videoId}`, { signal: controller.signal })
         .then(r => {
@@ -510,19 +508,13 @@ async function getFastestPipedStreamUrl(videoId) {
   });
 
   try {
-    // Promise.any returns as soon as ONE of the APIs succeeds. Instant load!
     return await Promise.any(promises);
   } catch (error) {
-    // If all APIs fail (or timeout), we land here.
     return null;
   }
 }
 
-// --- AUDIO ROUTING LOGIC ---
-// Helper functions to handle the duality of the app (API <audio> vs hidden YT Iframe)
-
 function getActiveEngine() {
-  // Returns 'api' or 'yt' based on what is currently responsible for making sound
   if (mode === 'mp3' && !usingYtFallback) return 'api';
   return 'yt';
 }
@@ -576,7 +568,6 @@ async function loadMp3Stream(autoplay) {
   document.getElementById('statusTag').textContent = 'API RACE...';
   document.getElementById('statusTag').className = 'tag tag-b';
   
-  // Fast parallel API request
   const streamUrl = await getFastestPipedStreamUrl(t.videoId);
   
   if (cur !== expectedCur) return; 
@@ -584,7 +575,6 @@ async function loadMp3Stream(autoplay) {
   const isStrictAdFree = document.getElementById('strictAdFree').checked;
 
   if (streamUrl) {
-    // APIs succeeded! Use HTML5 Audio.
     usingYtFallback = false;
     pauseYtForMp3();
     document.getElementById('mp3BadgeText').textContent = 'Proxy Engine Active';
@@ -592,17 +582,18 @@ async function loadMp3Stream(autoplay) {
     
     audio.src = streamUrl;
     audio.volume = vol / 100;
-    if (autoplay) audio.play().catch(() => {});
+    
+    // Explicit override to ensure browser autoplay policies do not kill the playlist loop
+    audio.autoplay = autoplay; 
+    
+    if (autoplay) audio.play().catch(() => { setPlaying(false); });
     
   } else {
-    // APIs failed.
     if (isStrictAdFree) {
-      // User demands zero ads. Skip this track immediately.
       document.getElementById('mp3SrcNote').textContent = 'API blocked. Strict Ad-Free mode is ON. Skipping...';
       setTimeout(() => skipForward(), 1000);
       return;
     } else {
-      // User allows fallback. Use hidden YT player.
       usingYtFallback = true;
       audio.removeAttribute('src');
       document.getElementById('mp3BadgeText').textContent = 'Fallback Engine Active';
@@ -630,6 +621,8 @@ function wireAudioPlayer() {
   audio.addEventListener('pause', () => {
     if (getActiveEngine() === 'api') setPlaying(false);
   });
+  
+  // Perfectly handles API audio transition
   audio.addEventListener('ended', () => {
     if (getActiveEngine() !== 'api') return;
     setPlaying(false);
@@ -913,7 +906,6 @@ function onPlayerReady() {
 }
 
 function onStateChange(e) {
-  // If the API engine is active, ignore YT player events
   if (getActiveEngine() === 'api') return;
   
   const S = YT.PlayerState;
@@ -937,8 +929,7 @@ function onPlayerError() {
 }
 
 function syncIndex() {
-  // If API engine is active, ignore YT player auto-advancing
-  if (getActiveEngine() === 'api') return;
+  // We allow syncIndex to run even if the API is active to stop YT from behaving badly
   if (!player || !playerReady) return;
   
   const idx = player.getPlaylistIndex();
@@ -946,8 +937,16 @@ function syncIndex() {
     cur = idx;
     renderList();
     updateStrip();
+    
     if (mode === 'mp3') {
       trySpotifyArtwork(tracks[cur]);
+      
+      // CRITICAL FIX: If the native YouTube player hijacked the playlist and jumped to the next song,
+      // stop it immediately and force the ad-free proxy to try again for the new song!
+      if (usingYtFallback) {
+         player.pauseVideo();
+         loadMp3Stream(true);
+      }
     }
   }
 }
@@ -1166,7 +1165,6 @@ function volClick(e) {
   document.getElementById('volFill').style.width = vol + '%';
   document.getElementById('volIcon').textContent = vol === 0 ? '🔇' : vol < 40 ? '🔉' : '🔊';
   
-  // Apply volume to BOTH engines just to be safe
   const audio = document.getElementById('audioPlayer');
   if (audio) audio.volume = vol / 100;
   if (player && playerReady) player.setVolume(vol);
