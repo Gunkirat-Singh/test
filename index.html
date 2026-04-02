@@ -25,6 +25,8 @@
   --text:#e8e5de;
   --muted:#4a4845;
   --dim:#2a2826;
+  --radius: 14px;
+  --viz-speed: 1;
 }
 body{background:var(--bg);color:var(--text);font-family:'Space Grotesk',sans-serif;min-height:100vh;overflow-x:hidden}
 #appWrap{transition:filter 0.2s ease}
@@ -50,17 +52,14 @@ body.is-paused .live-pill{border-color:var(--dim);color:var(--muted);background:
 .left{display:flex;flex-direction:column;padding:16px;gap:12px}
 .header{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap}
 .brand{display:flex;align-items:center;gap:10px}
-.brand-logo{width:34px;height:34px;border-radius:8px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;animation:logopulse 3s ease-in-out infinite;transition:background 0.4s}
+.brand-logo{width:34px;height:34px;border-radius:calc(var(--radius) * 0.6);background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;animation:logopulse 3s ease-in-out infinite;transition:background 0.4s}
 @keyframes logopulse{0%,100%{box-shadow:0 0 16px var(--accent-glow)}50%{box-shadow:0 0 28px var(--accent-glow),0 0 50px color-mix(in srgb,var(--accent) 20%,transparent)}}
 .brand-logo svg{width:18px;height:13px}
 .brand-name{font-size:14px;font-weight:700;color:#fff}
 .brand-sub{font-size:9px;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase}
 .header-right{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.theme-panel{display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:6px 10px;background:var(--bg3);border:0.5px solid var(--border);border-radius:10px}
-.theme-panel label{font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em}
-.theme-panel select,.theme-panel input[type="color"]{font-size:10px;font-family:inherit;border-radius:6px;border:0.5px solid var(--border);background:var(--bg2);color:var(--text);padding:3px 6px}
-.theme-panel input[type="color"]{width:28px;height:24px;padding:0;border:none;cursor:pointer}
-.theme-grad-row{display:flex;align-items:center;gap:4px}
+.btn-settings{display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:calc(var(--radius) * 0.7);border:0.5px solid var(--border);background:var(--bg3);color:var(--text);font-size:11px;font-weight:600;cursor:pointer;font-family:inherit}
+.btn-settings:hover{border-color:color-mix(in srgb,var(--accent) 40%,transparent);color:var(--accent)}
 .mode-toggle{display:flex;background:var(--bg3);border:0.5px solid var(--border);border-radius:20px;padding:3px;gap:2px}
 .mode-btn{display:flex;align-items:center;gap:4px;padding:5px 11px;border-radius:16px;font-size:10px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;border:none;background:transparent;color:var(--muted);font-family:inherit;transition:all 0.2s}
 .mode-btn.active-mp4{background:var(--accent-dim);color:var(--accent);border:0.5px solid color-mix(in srgb,var(--accent) 30%,transparent)}
@@ -69,7 +68,7 @@ body.is-paused .live-pill{border-color:var(--dim);color:var(--muted);background:
 .live-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);animation:blink 1s ease-in-out infinite;transition:background 0.4s}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:0.15}}
 
-.player-box{position:relative;border-radius:14px;overflow:hidden;background:#000;animation:borderpulse 4s ease-in-out infinite;transition:animation 0.4s}
+.player-box{position:relative;border-radius:var(--radius);overflow:hidden;background:#000;animation:borderpulse 4s ease-in-out infinite;transition:animation 0.4s, border-radius 0.3s}
 @keyframes borderpulse{0%,100%{box-shadow:0 0 0 1px color-mix(in srgb,var(--accent) 35%,transparent),0 0 28px color-mix(in srgb,var(--accent) 12%,transparent)}50%{box-shadow:0 0 0 1px color-mix(in srgb,var(--accent) 65%,transparent),0 0 48px color-mix(in srgb,var(--accent) 22%,transparent),0 0 90px color-mix(in srgb,var(--accent) 8%,transparent)}}
 .mp3-mode .player-box{animation:borderpulse 4s ease-in-out infinite}
 .corner{position:absolute;z-index:10;width:18px;height:18px;pointer-events:none;transition:border-color 0.4s}
@@ -80,26 +79,27 @@ body.is-paused .live-pill{border-color:var(--dim);color:var(--muted);background:
 .player-box::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--accent),var(--accent2),var(--accent),transparent);animation:scanbeam 3s linear infinite;z-index:10;transition:background 0.4s}
 @keyframes scanbeam{0%{opacity:0.3}50%{opacity:1}100%{opacity:0.3}}
 .video-wrap{position:relative;padding-top:56.25%}
-#ytPlayer{position:absolute;top:0;left:0;width:100%;height:100%;border:none}
+#ytPlayer{position:absolute;top:0;left:0;width:100%;height:100%;border:none;pointer-events:none} /* Block clicks to stop ad redirects */
+body:not(.mp3-mode) #ytPlayer { pointer-events: auto; }
 
 .mp3-overlay{position:absolute;inset:0;background:linear-gradient(135deg,#090912,#0d0a18,#08080e);display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;gap:10px;opacity:0;pointer-events:none;transition:opacity 0.4s;z-index:5;padding:12px 14px 10px;overflow:auto}
 .mp3-overlay.show{opacity:1;pointer-events:all}
 .mp3-badge{display:flex;align-items:center;gap:5px;padding:3px 12px;border-radius:20px;background:var(--accent-dim);border:0.5px solid color-mix(in srgb,var(--accent) 35%,transparent);font-size:9px;font-weight:600;color:var(--accent);letter-spacing:0.1em;align-self:center}
 .mp3-dot{width:5px;height:5px;border-radius:50%;background:var(--accent2);animation:blink 1.2s ease-in-out infinite}
 .mp3-src-note{font-size:9px;color:var(--muted);text-align:center;line-height:1.35;max-width:100%}
-.mp3-title-card{width:100%;max-width:320px;min-height:104px;border-radius:12px;background:linear-gradient(145deg,color-mix(in srgb,var(--accent) 12%,var(--bg3)),var(--bg3));border:1px solid color-mix(in srgb,var(--accent) 28%,transparent);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:18px 20px;box-shadow:0 0 24px color-mix(in srgb,var(--accent) 15%,transparent),inset 0 1px 0 color-mix(in srgb,var(--text) 6%,transparent);position:relative;align-self:center}
+.mp3-title-card{width:100%;max-width:320px;min-height:104px;border-radius:calc(var(--radius) * 0.85);background:linear-gradient(145deg,color-mix(in srgb,var(--accent) 12%,var(--bg3)),var(--bg3));border:1px solid color-mix(in srgb,var(--accent) 28%,transparent);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:18px 20px;box-shadow:0 0 24px color-mix(in srgb,var(--accent) 15%,transparent),inset 0 1px 0 color-mix(in srgb,var(--text) 6%,transparent);position:relative;align-self:center}
 .mp3-title-card .mp3-title-big{font-size:clamp(15px,3.2vw,22px);font-weight:700;color:var(--text);text-align:center;line-height:1.3;word-break:break-word}
 .mp3-info{text-align:center}
 .mp3-title{font-size:14px;font-weight:700;color:#fff;margin-bottom:3px;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-left:auto;margin-right:auto}
 .mp3-ch{font-size:10px;color:var(--muted)}
 .audio-viz{display:flex;align-items:flex-end;justify-content:center;gap:3px;height:28px}
-.av-bar{width:4px;border-radius:2px 2px 0 0;background:linear-gradient(to top,var(--accent),var(--accent2));animation:avwave var(--avd,.6s) ease-in-out infinite alternate}
+.av-bar{width:4px;border-radius:2px 2px 0 0;background:linear-gradient(to top,var(--accent),var(--accent2));animation:avwave calc(var(--avd, .6s) / var(--viz-speed)) ease-in-out infinite alternate}
 @keyframes avwave{0%{height:2px;opacity:0.3}100%{height:var(--avh,18px);opacity:1}}
 .visualizer{display:flex;align-items:flex-end;justify-content:center;gap:3px;height:32px;padding:5px 16px 3px;background:linear-gradient(to top,color-mix(in srgb,var(--accent) 4%,transparent),transparent);transition:background 0.4s}
-.bar{width:4px;border-radius:2px 2px 0 0;background:linear-gradient(to top,var(--accent),var(--accent2));animation:barwave var(--dur,.8s) ease-in-out infinite alternate;transition:background 0.4s}
+.bar{width:4px;border-radius:2px 2px 0 0;background:linear-gradient(to top,var(--accent),var(--accent2));animation:barwave calc(var(--dur, .8s) / var(--viz-speed)) ease-in-out infinite alternate;transition:background 0.4s}
 @keyframes barwave{0%{height:3px;opacity:0.4}100%{height:var(--h,18px);opacity:1}}
 
-.song-strip{background:var(--bg3);border:0.5px solid var(--border);border-radius:10px;padding:11px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px;transition:border-color 0.4s}
+.song-strip{background:var(--bg3);border:0.5px solid var(--border);border-radius:calc(var(--radius) * 0.7);padding:11px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px;transition:border-color 0.4s}
 .song-left{display:flex;align-items:center;gap:10px;flex:1;min-width:0}
 .song-icon{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#1a0808,#3a1010);border:1px solid var(--accent);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;animation:spin 8s linear infinite;box-shadow:0 0 10px color-mix(in srgb,var(--accent) 20%,transparent);transition:border-color 0.4s,box-shadow 0.4s,background 0.4s}
 @keyframes spin{to{transform:rotate(360deg)}}
@@ -112,10 +112,10 @@ body.is-paused .live-pill{border-color:var(--dim);color:var(--muted);background:
 .tag-g{background:var(--green-dim);color:var(--green);border:0.5px solid rgba(57,255,20,0.25)}
 .tag-gr{background:var(--bg2);color:var(--muted);border:0.5px solid var(--border)}
 
-.controls-panel{background:var(--bg3);border:0.5px solid var(--border);border-radius:14px;padding:14px 16px;display:flex;flex-direction:column;gap:11px}
+.controls-panel{background:var(--bg3);border:0.5px solid var(--border);border-radius:var(--radius);padding:14px 16px;display:flex;flex-direction:column;gap:11px;transition:border-radius 0.3s}
 .prog-labels{display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-bottom:5px}
-.prog-track{height:4px;background:var(--dim);border-radius:2px;position:relative;cursor:pointer}
-.prog-fill{height:100%;width:0%;border-radius:2px;background:linear-gradient(90deg,var(--accent),var(--accent2));box-shadow:0 0 7px color-mix(in srgb,var(--accent) 50%,transparent);position:relative;transition:background 0.4s,box-shadow 0.4s;pointer-events:none}
+.prog-track{height:4px;background:var(--dim);border-radius:2px;position:relative;cursor:pointer;padding: 4px 0; margin: -4px 0;}
+.prog-fill{height:4px;width:0%;border-radius:2px;background:linear-gradient(90deg,var(--accent),var(--accent2));box-shadow:0 0 7px color-mix(in srgb,var(--accent) 50%,transparent);position:relative;transition:background 0.4s,box-shadow 0.4s;pointer-events:none}
 .prog-thumb{width:11px;height:11px;border-radius:50%;background:#fff;box-shadow:0 0 7px color-mix(in srgb,var(--accent) 70%,transparent);position:absolute;right:-5.5px;top:50%;transform:translateY(-50%);transition:box-shadow 0.4s;pointer-events:none}
 .btn-row{display:flex;align-items:center;justify-content:center;gap:9px}
 .ctrl{background:var(--bg2);border:0.5px solid var(--border);border-radius:50%;color:#888;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.15s;flex-shrink:0;font-size:12px;user-select:none}
@@ -133,14 +133,14 @@ body.is-paused .live-pill{border-color:var(--dim);color:var(--muted);background:
 .freq-row{display:flex;align-items:center;gap:8px;padding:6px 11px;background:var(--bg2);border:0.5px solid var(--border);border-radius:7px}
 .freq-label{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;flex-shrink:0}
 .freq-bars{display:flex;align-items:flex-end;gap:2px;flex:1;height:16px}
-.fb{flex:1;border-radius:1px;background:linear-gradient(to top,var(--accent),color-mix(in srgb,var(--accent2) 50%,transparent));animation:fbwave var(--d,.5s) ease-in-out infinite alternate;transition:background 0.4s}
+.fb{flex:1;border-radius:1px;background:linear-gradient(to top,var(--accent),color-mix(in srgb,var(--accent2) 50%,transparent));animation:fbwave calc(var(--d, .5s) / var(--viz-speed)) ease-in-out infinite alternate;transition:background 0.4s}
 @keyframes fbwave{0%{height:2px;opacity:0.3}100%{height:var(--fh,10px);opacity:0.9}}
 .freq-val{font-size:10px;color:var(--muted);flex-shrink:0;font-weight:500;min-width:30px;text-align:right}
 .sec-row{display:flex;align-items:center;justify-content:space-between;gap:10px}
 .vol-group{display:flex;align-items:center;gap:7px;flex:1}
 .vol-icon{font-size:12px;color:var(--muted)}
-.vol-track{flex:1;height:3px;background:var(--dim);border-radius:2px;cursor:pointer;position:relative}
-.vol-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--accent),var(--accent2));pointer-events:none}
+.vol-track{flex:1;height:3px;background:var(--dim);border-radius:2px;cursor:pointer;position:relative;padding: 6px 0; margin: -6px 0;}
+.vol-fill{height:3px;border-radius:2px;background:linear-gradient(90deg,var(--accent),var(--accent2));pointer-events:none}
 .extras{display:flex;gap:5px;flex-wrap:wrap}
 .xbtn{font-size:9px;padding:4px 9px;border-radius:5px;background:var(--bg2);border:0.5px solid var(--border);color:var(--muted);cursor:pointer;font-family:inherit;font-weight:500;transition:all 0.15s;letter-spacing:0.04em}
 .xbtn:hover{border-color:var(--dim);color:#fff}
@@ -178,7 +178,7 @@ body.is-paused .live-pill{border-color:var(--dim);color:var(--muted);background:
 .pl-ch{font-size:9px;color:#2a2826}
 .pbars{display:flex;align-items:flex-end;gap:1px;height:11px;flex-shrink:0;opacity:0}
 .pl-item.active .pbars{opacity:1}
-.pb{width:3px;border-radius:1px;background:var(--accent);animation:pbwave var(--pd,.4s) ease-in-out infinite alternate}
+.pb{width:3px;border-radius:1px;background:var(--accent);animation:pbwave calc(var(--pd, .4s) / var(--viz-speed)) ease-in-out infinite alternate}
 @keyframes pbwave{0%{height:2px}100%{height:var(--ph,9px)}}
 
 .pl-loading{padding:5px 11px;display:flex;align-items:center;gap:8px}
@@ -199,9 +199,10 @@ body.is-paused .live-pill{border-color:var(--dim);color:var(--muted);background:
 .pj-footer{padding:6px 13px;border-top:0.5px solid var(--border);text-align:center;flex-shrink:0}
 .pj-text{font-size:9px;color:#181614;letter-spacing:0.04em}
 
+/* Settings Panel Enhancements */
 .settings-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.72);z-index:2000;display:flex;align-items:center;justify-content:center;padding:16px;opacity:0;pointer-events:none;transition:opacity 0.25s ease}
 .settings-backdrop.open{opacity:1;pointer-events:all}
-.settings-panel{width:100%;max-width:420px;max-height:90vh;overflow-y:auto;background:var(--bg3);border:0.5px solid var(--border);border-radius:16px;box-shadow:0 24px 80px rgba(0,0,0,0.55);padding:18px 18px 20px}
+.settings-panel{width:100%;max-width:440px;max-height:90vh;overflow-y:auto;background:var(--bg3);border:0.5px solid var(--border);border-radius:16px;box-shadow:0 24px 80px rgba(0,0,0,0.55);padding:18px 18px 20px}
 .settings-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
 .settings-title{font-size:16px;font-weight:700;color:#fff}
 .settings-close{width:32px;height:32px;border-radius:8px;border:0.5px solid var(--border);background:var(--bg2);color:var(--text);cursor:pointer;font-size:18px;line-height:1;display:flex;align-items:center;justify-content:center}
@@ -210,15 +211,21 @@ body.is-paused .live-pill{border-color:var(--dim);color:var(--muted);background:
 .settings-section:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
 .settings-label{display:block;font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px}
 .settings-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap}
-.settings-row label{font-size:11px;color:var(--muted);min-width:100px}
+.settings-row label{font-size:11px;color:var(--muted);min-width:100px; flex-shrink:0}
 .settings-row input[type="range"]{flex:1;min-width:120px;accent-color:var(--accent)}
 .settings-val{font-size:11px;color:var(--text);min-width:38px;text-align:right;font-variant-numeric:tabular-nums}
 .settings-actions{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap}
 .settings-btn{font-size:11px;padding:8px 14px;border-radius:8px;border:0.5px solid var(--border);background:var(--bg2);color:var(--text);cursor:pointer;font-family:inherit;font-weight:600}
 .settings-btn.primary{background:linear-gradient(135deg,var(--accent),var(--accent2));border-color:transparent;color:#fff}
 .settings-hint{font-size:10px;color:var(--muted);line-height:1.45;margin-top:6px}
-.btn-settings{display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:10px;border:0.5px solid var(--border);background:var(--bg3);color:var(--text);font-size:11px;font-weight:600;cursor:pointer;font-family:inherit}
-.btn-settings:hover{border-color:color-mix(in srgb,var(--accent) 40%,transparent);color:var(--accent)}
+
+/* Toggle Switch CSS */
+.switch {position: relative; display: inline-block; width: 34px; height: 18px;}
+.switch input {opacity: 0; width: 0; height: 0;}
+.slider {position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--dim); transition: .3s; border-radius: 18px;}
+.slider:before {position: absolute; content: ""; height: 14px; width: 14px; left: 2px; bottom: 2px; background-color: white; transition: .3s; border-radius: 50%;}
+input:checked + .slider {background-color: var(--accent);}
+input:checked + .slider:before {transform: translateX(16px);}
 </style>
 </head>
 <body>
@@ -253,8 +260,8 @@ body.is-paused .live-pill{border-color:var(--dim);color:var(--muted);background:
     <div class="video-wrap">
       <div id="ytPlayer"></div>
       <div class="mp3-overlay" id="mp3Overlay">
-        <div class="mp3-badge"><div class="mp3-dot"></div>Hybrid Fallback Active</div>
-        <p class="mp3-src-note" id="mp3SrcNote">Using native player safely hidden behind the interface to bypass API blocks. Apple Music artwork active.</p>
+        <div class="mp3-badge"><div class="mp3-dot"></div><span id="mp3BadgeText">Audio Mode Active</span></div>
+        <p class="mp3-src-note" id="mp3SrcNote">Parallel fetching active for zero-wait streams.</p>
         <div class="mp3-title-card" id="mp3TitleCard">
           <img id="mp3Art" alt="" width="120" height="120" style="display:none;width:120px;height:120px;border-radius:10px;object-fit:cover;border:1px solid color-mix(in srgb,var(--accent) 25%,transparent);box-shadow:0 8px 24px rgba(0,0,0,0.4)">
           <div class="mp3-title-big" id="mp3TitleBig">Select a track</div>
@@ -356,12 +363,24 @@ body.is-paused .live-pill{border-color:var(--dim);color:var(--muted);background:
 <div class="settings-backdrop" id="settingsBackdrop" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
   <div class="settings-panel" onclick="event.stopPropagation()">
     <div class="settings-head">
-      <div class="settings-title" id="settingsTitle">Settings</div>
+      <div class="settings-title" id="settingsTitle">Station Preferences</div>
       <button type="button" class="settings-close" onclick="closeSettings()" aria-label="Close">×</button>
     </div>
 
     <div class="settings-section">
-      <span class="settings-label">Theme</span>
+      <span class="settings-label">Engine & Playback</span>
+      <div class="settings-row" style="justify-content: space-between; margin-bottom: 6px;">
+        <label for="strictAdFree">Strict Ad-Free Mode</label>
+        <label class="switch">
+          <input type="checkbox" id="strictAdFree" onchange="saveSettings()">
+          <span class="slider"></span>
+        </label>
+      </div>
+      <p class="settings-hint" style="margin-top:0">If enabled, the player will NEVER fallback to YouTube if the APIs fail. It will automatically skip to the next song to guarantee you never hear an ad. If disabled, it falls back to the native YT player (which may have ads) to ensure music plays.</p>
+    </div>
+
+    <div class="settings-section">
+      <span class="settings-label">Theme Customization</span>
       <div class="settings-row">
         <label for="themePreset">Preset</label>
         <select id="themePreset" style="flex:1;min-width:140px;font-size:11px;padding:6px 8px;border-radius:8px;border:0.5px solid var(--border);background:var(--bg2);color:var(--text);font-family:inherit" onchange="onThemePresetChange()">
@@ -375,20 +394,34 @@ body.is-paused .live-pill{border-color:var(--dim);color:var(--muted);background:
         </select>
       </div>
       <div class="settings-row">
-        <label>Primary</label>
+        <label>Colors</label>
         <input type="color" id="themeColorA" value="#ff3333" title="Primary" oninput="onThemeColorsChanged()">
-        <label style="min-width:auto">End</label>
+        <label style="min-width:auto; margin:0 4px">to</label>
         <input type="color" id="themeColorB" value="#ff8800" title="Gradient end" oninput="onThemeColorsChanged()">
       </div>
       <div class="settings-row">
-        <label for="gradIntensity">Gradient</label>
+        <label for="gradIntensity">Gradient Blend</label>
         <input type="range" id="gradIntensity" min="0" max="100" value="100" oninput="onGradIntensityChange()">
         <span class="settings-val" id="gradIntensityVal">100%</span>
       </div>
     </div>
 
     <div class="settings-section">
-      <span class="settings-label">Display</span>
+      <span class="settings-label">UI Tweaks</span>
+      <div class="settings-row">
+        <label for="uiRadius">Corner Radius</label>
+        <input type="range" id="uiRadius" min="0" max="30" value="14" oninput="applyUiTweaks()">
+        <span class="settings-val" id="valRadius">14px</span>
+      </div>
+      <div class="settings-row">
+        <label for="vizSpeed">Visualizer Speed</label>
+        <input type="range" id="vizSpeed" min="50" max="200" value="100" oninput="applyUiTweaks()">
+        <span class="settings-val" id="valVizSpeed">1.0x</span>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <span class="settings-label">Display & Contrast</span>
       <div class="settings-row">
         <label for="setBrightness">Brightness</label>
         <input type="range" id="setBrightness" min="70" max="130" value="100" oninput="applyDisplayTuning()">
@@ -405,23 +438,15 @@ body.is-paused .live-pill{border-color:var(--dim);color:var(--muted);background:
         <span class="settings-val" id="valSaturate">100%</span>
       </div>
       <div class="settings-row">
-        <label for="surfaceBoost">Surfaces</label>
+        <label for="surfaceBoost">Panel Depth</label>
         <input type="range" id="surfaceBoost" min="80" max="120" value="100" oninput="applySurfaceBoost()">
         <span class="settings-val" id="valSurface">100%</span>
       </div>
     </div>
 
-    <div class="settings-section">
-      <span class="settings-label">System Architecture</span>
-      <div class="settings-row" style="flex-direction:column;align-items:stretch">
-        <p style="font-size:11px;color:var(--green);font-weight:600;margin-bottom:6px">✓ Hybrid Engine Active</p>
-        <p class="settings-hint" style="margin-top:0">Because YouTube blocks most external streams, MP3 mode now uses a flawless hybrid fallback. It plays audio natively behind the MP3 interface to guarantee stability.</p>
-      </div>
-    </div>
-
     <div class="settings-actions">
-      <button type="button" class="settings-btn" onclick="resetSettings()">Reset all</button>
-      <button type="button" class="settings-btn primary" onclick="closeSettings()">Done</button>
+      <button type="button" class="settings-btn" onclick="resetSettings()">Reset Default</button>
+      <button type="button" class="settings-btn primary" onclick="closeSettings()">Save & Close</button>
     </div>
   </div>
 </div>
@@ -434,6 +459,7 @@ const PL_ID = 'PLuXBepVDtfVDfj6bYU3jb5f0bdqE-ljVU';
 const PIPED_INSTANCES = [
   'https://pipedapi.kavin.rocks',
   'https://pipedapi.smnz.de',
+  'https://pipedapi.adminforge.de',
   'https://pipedapi.lunar.icu'
 ];
 
@@ -449,26 +475,56 @@ let vol = 80;
 let progTimer = null;
 let playerReady = false;
 let surfaceBoostPct = 100;
-
-// THIS is the secret sauce: it flips to true if APIs fail, telling the music to play invisibly.
 let usingYtFallback = false; 
 
-async function getPipedStreamUrl(videoId) {
-  for (const api of PIPED_INSTANCES) {
-    try {
-      // 1.5s timeout per API so it doesn't freeze the app if one is dead
+// --- FAST PARALLEL API CHECKING ---
+async function getFastestPipedStreamUrl(videoId) {
+  // We fire all APIs at once and race them. First to return a valid URL wins.
+  const promises = PIPED_INSTANCES.map(api => {
+    return new Promise((resolve, reject) => {
       const controller = new AbortController();
-      const id = setTimeout(() => controller.abort(), 1500); 
-      const r = await fetch(`${api}/streams/${videoId}`, { signal: controller.signal });
-      clearTimeout(id);
-      if (!r.ok) continue;
-      const d = await r.json();
-      if (d && d.audioStreams && d.audioStreams.length > 0) {
-        return d.audioStreams.sort((a, b) => b.bitrate - a.bitrate)[0].url;
-      }
-    } catch (e) {}
+      const timeoutId = setTimeout(() => {
+        controller.abort();
+        reject(new Error('Timeout'));
+      }, 3000); // 3 second max wait per request
+      
+      fetch(`${api}/streams/${videoId}`, { signal: controller.signal })
+        .then(r => {
+          if (!r.ok) throw new Error('API failed');
+          return r.json();
+        })
+        .then(d => {
+          clearTimeout(timeoutId);
+          if (d && d.audioStreams && d.audioStreams.length > 0) {
+            const bestUrl = d.audioStreams.sort((a, b) => b.bitrate - a.bitrate)[0].url;
+            resolve(bestUrl);
+          } else {
+            reject(new Error('No audio streams'));
+          }
+        })
+        .catch(e => {
+          clearTimeout(timeoutId);
+          reject(e);
+        });
+    });
+  });
+
+  try {
+    // Promise.any returns as soon as ONE of the APIs succeeds. Instant load!
+    return await Promise.any(promises);
+  } catch (error) {
+    // If all APIs fail (or timeout), we land here.
+    return null;
   }
-  return null;
+}
+
+// --- AUDIO ROUTING LOGIC ---
+// Helper functions to handle the duality of the app (API <audio> vs hidden YT Iframe)
+
+function getActiveEngine() {
+  // Returns 'api' or 'yt' based on what is currently responsible for making sound
+  if (mode === 'mp3' && !usingYtFallback) return 'api';
+  return 'yt';
 }
 
 function pauseYtForMp3() {
@@ -513,31 +569,50 @@ async function loadMp3Stream(autoplay) {
   const expectedCur = cur; 
   const t = tracks[cur];
   if (!t) return;
+  
   const audio = document.getElementById('audioPlayer');
   audio.pause();
   
-  document.getElementById('statusTag').textContent = 'LOADING...';
+  document.getElementById('statusTag').textContent = 'API RACE...';
   document.getElementById('statusTag').className = 'tag tag-b';
   
-  const streamUrl = await getPipedStreamUrl(t.videoId);
+  // Fast parallel API request
+  const streamUrl = await getFastestPipedStreamUrl(t.videoId);
   
   if (cur !== expectedCur) return; 
   
+  const isStrictAdFree = document.getElementById('strictAdFree').checked;
+
   if (streamUrl) {
-    // API Success! Stream the raw audio file
+    // APIs succeeded! Use HTML5 Audio.
     usingYtFallback = false;
     pauseYtForMp3();
+    document.getElementById('mp3BadgeText').textContent = 'Proxy Engine Active';
+    document.getElementById('mp3SrcNote').textContent = 'Audio fetched directly from decentralized node.';
+    
     audio.src = streamUrl;
     audio.volume = vol / 100;
     if (autoplay) audio.play().catch(() => {});
+    
   } else {
-    // APIs blocked! Fire up the Hybrid YouTube Fallback
-    usingYtFallback = true;
-    audio.removeAttribute('src');
-    if (player && playerReady) {
-      player.playVideoAt(cur);
-      player.setVolume(vol);
-      if (!autoplay) setTimeout(() => player.pauseVideo(), 500);
+    // APIs failed.
+    if (isStrictAdFree) {
+      // User demands zero ads. Skip this track immediately.
+      document.getElementById('mp3SrcNote').textContent = 'API blocked. Strict Ad-Free mode is ON. Skipping...';
+      setTimeout(() => skipForward(), 1000);
+      return;
+    } else {
+      // User allows fallback. Use hidden YT player.
+      usingYtFallback = true;
+      audio.removeAttribute('src');
+      document.getElementById('mp3BadgeText').textContent = 'Fallback Engine Active';
+      document.getElementById('mp3SrcNote').textContent = 'APIs blocked. Using native player secretly to bypass silence. (May contain ads)';
+      
+      if (player && playerReady) {
+        player.playVideoAt(cur);
+        player.setVolume(vol);
+        if (!autoplay) setTimeout(() => player.pauseVideo(), 500);
+      }
     }
   }
   
@@ -550,13 +625,13 @@ function wireAudioPlayer() {
   if (!audio || audio._wired) return;
   audio._wired = true;
   audio.addEventListener('play', () => {
-    if (mode === 'mp3' && !usingYtFallback) setPlaying(true);
+    if (getActiveEngine() === 'api') setPlaying(true);
   });
   audio.addEventListener('pause', () => {
-    if (mode === 'mp3' && !usingYtFallback) setPlaying(false);
+    if (getActiveEngine() === 'api') setPlaying(false);
   });
   audio.addEventListener('ended', () => {
-    if (mode !== 'mp3' || usingYtFallback) return;
+    if (getActiveEngine() !== 'api') return;
     setPlaying(false);
     stopProg();
     if (isRepeat) {
@@ -680,6 +755,16 @@ function applySurfaceBoost() {
   saveSettings();
 }
 
+function applyUiTweaks() {
+  const r = document.getElementById('uiRadius').value;
+  const vs = document.getElementById('vizSpeed').value;
+  document.getElementById('valRadius').textContent = r + 'px';
+  document.getElementById('valVizSpeed').textContent = (vs / 100).toFixed(1) + 'x';
+  document.documentElement.style.setProperty('--radius', r + 'px');
+  document.documentElement.style.setProperty('--viz-speed', (vs / 100));
+  saveSettings();
+}
+
 function resetSettings() {
   document.getElementById('gradIntensity').value = 100;
   document.getElementById('gradIntensityVal').textContent = '100%';
@@ -687,17 +772,19 @@ function resetSettings() {
   document.getElementById('setContrast').value = 100;
   document.getElementById('setSaturate').value = 100;
   document.getElementById('surfaceBoost').value = 100;
+  document.getElementById('uiRadius').value = 14;
+  document.getElementById('vizSpeed').value = 100;
+  document.getElementById('strictAdFree').checked = false;
   surfaceBoostPct = 100;
   applyDisplayTuning();
+  applyUiTweaks();
   document.getElementById('themePreset').value = 'default';
   document.getElementById('themeColorA').value = '#ff3333';
   document.getElementById('themeColorB').value = '#ff8800';
   onThemePresetChange();
-  applyDisplayTuning();
-  applySurfaceBoost();
 }
 
-const LS = 'vibeStationSettings';
+const LS = 'vibeStationSettingsV2';
 function saveSettings() {
   try {
     localStorage.setItem(LS, JSON.stringify({
@@ -708,7 +795,10 @@ function saveSettings() {
       br: document.getElementById('setBrightness').value,
       ct: document.getElementById('setContrast').value,
       sat: document.getElementById('setSaturate').value,
-      surf: document.getElementById('surfaceBoost').value
+      surf: document.getElementById('surfaceBoost').value,
+      rad: document.getElementById('uiRadius').value,
+      viz: document.getElementById('vizSpeed').value,
+      strict: document.getElementById('strictAdFree').checked
     }));
   } catch (e) {}
 }
@@ -732,9 +822,14 @@ function loadSettings() {
       document.getElementById('surfaceBoost').value = s.surf;
       surfaceBoostPct = Number(s.surf);
     }
+    if (s.rad != null) document.getElementById('uiRadius').value = s.rad;
+    if (s.viz != null) document.getElementById('vizSpeed').value = s.viz;
+    if (s.strict != null) document.getElementById('strictAdFree').checked = s.strict;
+    
     applyThemeColors();
     applyDisplayTuning();
     applySurfaceBoost();
+    applyUiTweaks();
     return true;
   } catch (e) {
     return false;
@@ -818,7 +913,9 @@ function onPlayerReady() {
 }
 
 function onStateChange(e) {
-  if (mode === 'mp3' && !usingYtFallback) return;
+  // If the API engine is active, ignore YT player events
+  if (getActiveEngine() === 'api') return;
+  
   const S = YT.PlayerState;
   if (e.data === S.PLAYING) {
     setPlaying(true);
@@ -840,8 +937,10 @@ function onPlayerError() {
 }
 
 function syncIndex() {
-  if (mode === 'mp3' && !usingYtFallback) return;
+  // If API engine is active, ignore YT player auto-advancing
+  if (getActiveEngine() === 'api') return;
   if (!player || !playerReady) return;
+  
   const idx = player.getPlaylistIndex();
   if (idx >= 0 && idx !== cur) {
     cur = idx;
@@ -905,10 +1004,6 @@ function showFallback() {
         Use the YouTube controls inside<br>the video player to browse tracks.<br><br>
         <span style="color:#4a4845">Tip: Open this page on GitHub Pages<br>for full playlist sidebar to work.</span>
       </div>
-      <a href="https://youtube.com/playlist?list=${PL_ID}" target="_blank" rel="noopener"
-         style="display:inline-block;padding:7px 14px;background:rgba(255,51,51,0.08);
-         border:0.5px solid rgba(255,51,51,0.35);border-radius:7px;color:#ff6666;
-         font-size:11px;text-decoration:none;font-weight:500">Open on YouTube ↗</a>
     </div>`;
   document.getElementById('plCount').textContent = 'Open YT';
 }
@@ -979,7 +1074,9 @@ function updateStrip() {
 }
 
 function togglePlay() {
-  if (mode === 'mp3' && !usingYtFallback) {
+  const engine = getActiveEngine();
+  
+  if (engine === 'api') {
     const audio = document.getElementById('audioPlayer');
     if (!tracks.length) return;
     if (!audio.src) {
@@ -988,11 +1085,11 @@ function togglePlay() {
     }
     if (audio.paused) audio.play().catch(() => {});
     else audio.pause();
-    return;
+  } else {
+    if (!player || !playerReady) return;
+    if (isPlaying) player.pauseVideo();
+    else player.playVideo();
   }
-  if (!player || !playerReady) return;
-  if (isPlaying) player.pauseVideo();
-  else player.playVideo();
 }
 
 function setPlayingUiFromYt(state) {
@@ -1028,13 +1125,18 @@ function skipForward() {
 }
 
 function seekRel(s) {
-  if (mode === 'mp3' && !usingYtFallback) {
+  const engine = getActiveEngine();
+  
+  if (engine === 'api') {
     const audio = document.getElementById('audioPlayer');
     if (!audio || !audio.src) return;
     audio.currentTime = Math.max(0, (audio.currentTime || 0) + s);
-  } else if (player && playerReady) {
-    player.seekTo(Math.max(0, (player.getCurrentTime() || 0) + s), true);
+  } else {
+    if (player && playerReady) {
+      player.seekTo(Math.max(0, (player.getCurrentTime() || 0) + s), true);
+    }
   }
+  
   const btn = s > 0 ? document.getElementById('seekFwdBtn') : document.getElementById('seekBackBtn');
   btn.style.color = 'var(--accent)';
   btn.style.borderColor = 'currentColor';
@@ -1044,16 +1146,18 @@ function seekRel(s) {
 function seekClick(e) {
   const rect = e.currentTarget.getBoundingClientRect();
   const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-  if (mode === 'mp3' && !usingYtFallback) {
+  const engine = getActiveEngine();
+  
+  if (engine === 'api') {
     const audio = document.getElementById('audioPlayer');
     if (!audio || !audio.src) return;
     const d = audio.duration;
     if (!isFinite(d) || d <= 0) return;
     audio.currentTime = pct * d;
-    return;
+  } else {
+    if (!player || !playerReady) return;
+    player.seekTo(pct * (player.getDuration() || 0), true);
   }
-  if (!player || !playerReady) return;
-  player.seekTo(pct * (player.getDuration() || 0), true);
 }
 
 function volClick(e) {
@@ -1061,11 +1165,10 @@ function volClick(e) {
   vol = Math.round(Math.max(0, Math.min(100, (e.clientX - rect.left) / rect.width * 100)));
   document.getElementById('volFill').style.width = vol + '%';
   document.getElementById('volIcon').textContent = vol === 0 ? '🔇' : vol < 40 ? '🔉' : '🔊';
-  if (mode === 'mp3' && !usingYtFallback) {
-    const audio = document.getElementById('audioPlayer');
-    if (audio) audio.volume = vol / 100;
-    return;
-  }
+  
+  // Apply volume to BOTH engines just to be safe
+  const audio = document.getElementById('audioPlayer');
+  if (audio) audio.volume = vol / 100;
   if (player && playerReady) player.setVolume(vol);
 }
 
@@ -1086,22 +1189,24 @@ function openYT() {
 function startProg() {
   stopProg();
   progTimer = setInterval(() => {
-    if (mode === 'mp3' && !usingYtFallback) {
+    const engine = getActiveEngine();
+    let c = 0, d = 0;
+    
+    if (engine === 'api') {
       const audio = document.getElementById('audioPlayer');
       if (!audio || !audio.src) return;
-      const c = audio.currentTime || 0;
-      const d = audio.duration || 0;
-      document.getElementById('progFill').style.width = (isFinite(d) && d > 0 ? c / d * 100 : 0) + '%';
-      document.getElementById('timeNow').textContent = fmt(c);
-      document.getElementById('timeTot').textContent = isFinite(d) && d > 0 ? fmt(d) : '—';
-      return;
+      c = audio.currentTime || 0;
+      d = audio.duration || 0;
+    } else {
+      if (!player || !playerReady) return;
+      c = player.getCurrentTime() || 0;
+      d = player.getDuration() || 0;
     }
-    if (!player || !playerReady) return;
-    const c = player.getCurrentTime() || 0;
-    const d = player.getDuration() || 0;
-    document.getElementById('progFill').style.width = (d > 0 ? c / d * 100 : 0) + '%';
+    
+    document.getElementById('progFill').style.width = (isFinite(d) && d > 0 ? c / d * 100 : 0) + '%';
     document.getElementById('timeNow').textContent = fmt(c);
-    document.getElementById('timeTot').textContent = fmt(d);
+    document.getElementById('timeTot').textContent = isFinite(d) && d > 0 ? fmt(d) : '—';
+    
   }, 500);
 }
 
@@ -1119,18 +1224,19 @@ function setMode(m) {
   mode = m;
   const isMP3 = m === 'mp3';
   const wasPlaying = isPlaying;
+  
   document.getElementById('appWrap').classList.toggle('mp3-mode', isMP3);
   document.getElementById('mp4Btn').className = 'mode-btn' + (!isMP3 ? ' active-mp4' : '');
   document.getElementById('mp3Btn').className = 'mode-btn' + (isMP3 ? ' active-mp3' : '');
   document.getElementById('mp3Overlay').classList.toggle('show', isMP3);
   document.getElementById('modeTag').textContent = isMP3 ? 'MP3' : 'MP4';
   document.getElementById('modeTag').className = 'tag ' + (isMP3 ? 'tag-b' : 'tag-gr');
-  document.getElementById('modeHint').textContent = isMP3
-    ? '🎵 Hybrid Audio Active (Serverless)'
-    : '🎬 Video mode';
+  document.getElementById('modeHint').textContent = isMP3 ? '🎵 Smart Audio Engine Active' : '🎬 Video mode';
   document.getElementById('statMode').textContent = isMP3 ? 'MP3 🎵' : 'MP4 🎬';
+  
   buildAudioViz();
   updateStrip();
+  
   if (isMP3) {
     if (player && playerReady) pauseYtForMp3();
     if (tracks.length) loadMp3Stream(!!wasPlaying);
@@ -1141,7 +1247,7 @@ function setMode(m) {
     }
   } else {
     stopMp3Audio();
-    usingYtFallback = false; // Reset fallback
+    usingYtFallback = false; 
     const art = document.getElementById('mp3Art');
     if (art) {
       art.removeAttribute('src');
@@ -1227,6 +1333,7 @@ if (!loadSettings()) {
   onThemePresetChange();
   applyDisplayTuning();
   applySurfaceBoost();
+  applyUiTweaks();
 }
 (function initStreamUi() {
   wireAudioPlayer();
