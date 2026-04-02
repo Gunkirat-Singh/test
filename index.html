@@ -27,6 +27,7 @@
   --dim:#2a2826;
 }
 body{background:var(--bg);color:var(--text);font-family:'Space Grotesk',sans-serif;min-height:100vh;overflow-x:hidden}
+#appWrap{transition:filter 0.2s ease}
 body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.025) 2px,rgba(0,0,0,0.025) 4px);pointer-events:none;z-index:1000}
 .ambient{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
 .amb-r{position:absolute;top:-10%;left:5%;width:500px;height:500px;background:radial-gradient(circle,color-mix(in srgb,var(--accent) 14%,transparent) 0%,transparent 70%);animation:drift1 8s ease-in-out infinite;transition:opacity 0.8s}
@@ -86,17 +87,14 @@ body.is-paused .live-pill{border-color:var(--dim);color:var(--muted);background:
 .mp3-badge{display:flex;align-items:center;gap:5px;padding:3px 12px;border-radius:20px;background:var(--accent-dim);border:0.5px solid color-mix(in srgb,var(--accent) 35%,transparent);font-size:9px;font-weight:600;color:var(--accent);letter-spacing:0.1em;align-self:center}
 .mp3-dot{width:5px;height:5px;border-radius:50%;background:var(--accent2);animation:blink 1.2s ease-in-out infinite}
 .mp3-src-note{font-size:9px;color:var(--muted);text-align:center;line-height:1.35;max-width:100%}
-.mp3-title-card{width:100%;max-width:280px;min-height:88px;border-radius:12px;background:linear-gradient(145deg,color-mix(in srgb,var(--accent) 12%,var(--bg3)),var(--bg3));border:1px solid color-mix(in srgb,var(--accent) 28%,transparent);display:flex;align-items:center;justify-content:center;padding:14px 16px;box-shadow:0 0 24px color-mix(in srgb,var(--accent) 15%,transparent),inset 0 1px 0 color-mix(in srgb,var(--text) 6%,transparent);position:relative;align-self:center}
-.mp3-title-card .mp3-title-big{font-size:clamp(13px,2.8vw,17px);font-weight:700;color:var(--text);text-align:center;line-height:1.35;word-break:break-word}
+.mp3-title-card{width:100%;max-width:320px;min-height:104px;border-radius:12px;background:linear-gradient(145deg,color-mix(in srgb,var(--accent) 12%,var(--bg3)),var(--bg3));border:1px solid color-mix(in srgb,var(--accent) 28%,transparent);display:flex;align-items:center;justify-content:center;padding:18px 20px;box-shadow:0 0 24px color-mix(in srgb,var(--accent) 15%,transparent),inset 0 1px 0 color-mix(in srgb,var(--text) 6%,transparent);position:relative;align-self:center}
+.mp3-title-card .mp3-title-big{font-size:clamp(15px,3.2vw,22px);font-weight:700;color:var(--text);text-align:center;line-height:1.3;word-break:break-word}
 .mp3-info{text-align:center}
 .mp3-title{font-size:14px;font-weight:700;color:#fff;margin-bottom:3px;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-left:auto;margin-right:auto}
 .mp3-ch{font-size:10px;color:var(--muted)}
 .audio-viz{display:flex;align-items:flex-end;justify-content:center;gap:3px;height:28px}
 .av-bar{width:4px;border-radius:2px 2px 0 0;background:linear-gradient(to top,var(--accent),var(--accent2));animation:avwave var(--avd,.6s) ease-in-out infinite alternate}
 @keyframes avwave{0%{height:2px;opacity:0.3}100%{height:var(--avh,18px);opacity:1}}
-.deezer-frame-wrap{width:100%;flex:0 0 auto;border-radius:10px;overflow:hidden;border:0.5px solid color-mix(in srgb,var(--accent) 22%,transparent);background:var(--bg2);min-height:130px}
-#deezerFrame{width:100%;height:130px;border:none;display:block;background:var(--bg)}
-
 .visualizer{display:flex;align-items:flex-end;justify-content:center;gap:3px;height:32px;padding:5px 16px 3px;background:linear-gradient(to top,color-mix(in srgb,var(--accent) 4%,transparent),transparent);transition:background 0.4s}
 .bar{width:4px;border-radius:2px 2px 0 0;background:linear-gradient(to top,var(--accent),var(--accent2));animation:barwave var(--dur,.8s) ease-in-out infinite alternate;transition:background 0.4s}
 @keyframes barwave{0%{height:3px;opacity:0.4}100%{height:var(--h,18px);opacity:1}}
@@ -117,7 +115,6 @@ body.is-paused .live-pill{border-color:var(--dim);color:var(--muted);background:
 .controls-panel{background:var(--bg3);border:0.5px solid var(--border);border-radius:14px;padding:14px 16px;display:flex;flex-direction:column;gap:11px}
 .prog-labels{display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-bottom:5px}
 .prog-track{height:4px;background:var(--dim);border-radius:2px;position:relative;cursor:pointer}
-.prog-track.mp3-locked{opacity:0.45;cursor:not-allowed}
 .prog-fill{height:100%;width:0%;border-radius:2px;background:linear-gradient(90deg,var(--accent),var(--accent2));box-shadow:0 0 7px color-mix(in srgb,var(--accent) 50%,transparent);position:relative;transition:background 0.4s,box-shadow 0.4s;pointer-events:none}
 .prog-thumb{width:11px;height:11px;border-radius:50%;background:#fff;box-shadow:0 0 7px color-mix(in srgb,var(--accent) 70%,transparent);position:absolute;right:-5.5px;top:50%;transform:translateY(-50%);transition:box-shadow 0.4s;pointer-events:none}
 .btn-row{display:flex;align-items:center;justify-content:center;gap:9px}
@@ -170,10 +167,6 @@ body.is-paused .live-pill{border-color:var(--dim);color:var(--muted);background:
 .pl-num{font-size:10px;color:#2a2826;min-width:18px;text-align:center;flex-shrink:0;font-weight:500}
 .pl-item.active .pl-num{color:var(--accent)}
 .pl-thumb{width:50px;height:34px;border-radius:4px;background:var(--bg3);flex-shrink:0;overflow:hidden;position:relative;border:0.5px solid var(--border);transition:border-color 0.2s,box-shadow 0.2s}
-.pl-thumb.pl-thumb-name{display:flex;align-items:center;justify-content:center;padding:3px 5px}
-.pl-thumb.pl-thumb-name img{display:none!important}
-.pl-thumb.pl-thumb-name .pl-ov{display:none}
-.pl-thumb-label{font-size:8px;font-weight:600;color:var(--accent);line-height:1.2;text-align:center;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word}
 .pl-thumb img{width:100%;height:100%;object-fit:cover;display:block}
 .pl-item.active .pl-thumb{border-color:color-mix(in srgb,var(--accent) 45%,transparent);box-shadow:0 0 7px color-mix(in srgb,var(--accent) 20%,transparent)}
 .pl-ov{position:absolute;inset:0;background:rgba(0,0,0,0.55);display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity 0.15s;font-size:11px;color:#fff}
@@ -205,6 +198,27 @@ body.is-paused .live-pill{border-color:var(--dim);color:var(--muted);background:
 .now-open:hover{color:var(--muted);border-color:var(--muted)}
 .pj-footer{padding:6px 13px;border-top:0.5px solid var(--border);text-align:center;flex-shrink:0}
 .pj-text{font-size:9px;color:#181614;letter-spacing:0.04em}
+
+.settings-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.72);z-index:2000;display:flex;align-items:center;justify-content:center;padding:16px;opacity:0;pointer-events:none;transition:opacity 0.25s ease}
+.settings-backdrop.open{opacity:1;pointer-events:all}
+.settings-panel{width:100%;max-width:420px;max-height:90vh;overflow-y:auto;background:var(--bg3);border:0.5px solid var(--border);border-radius:16px;box-shadow:0 24px 80px rgba(0,0,0,0.55);padding:18px 18px 20px}
+.settings-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.settings-title{font-size:16px;font-weight:700;color:#fff}
+.settings-close{width:32px;height:32px;border-radius:8px;border:0.5px solid var(--border);background:var(--bg2);color:var(--text);cursor:pointer;font-size:18px;line-height:1;display:flex;align-items:center;justify-content:center}
+.settings-close:hover{background:var(--dim)}
+.settings-section{margin-bottom:16px;padding-bottom:14px;border-bottom:0.5px solid var(--border)}
+.settings-section:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
+.settings-label{display:block;font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px}
+.settings-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap}
+.settings-row label{font-size:11px;color:var(--muted);min-width:100px}
+.settings-row input[type="range"]{flex:1;min-width:120px;accent-color:var(--accent)}
+.settings-val{font-size:11px;color:var(--text);min-width:38px;text-align:right;font-variant-numeric:tabular-nums}
+.settings-actions{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap}
+.settings-btn{font-size:11px;padding:8px 14px;border-radius:8px;border:0.5px solid var(--border);background:var(--bg2);color:var(--text);cursor:pointer;font-family:inherit;font-weight:600}
+.settings-btn.primary{background:linear-gradient(135deg,var(--accent),var(--accent2));border-color:transparent;color:#fff}
+.settings-hint{font-size:10px;color:var(--muted);line-height:1.45;margin-top:6px}
+.btn-settings{display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:10px;border:0.5px solid var(--border);background:var(--bg3);color:var(--text);font-size:11px;font-weight:600;cursor:pointer;font-family:inherit}
+.btn-settings:hover{border-color:color-mix(in srgb,var(--accent) 40%,transparent);color:var(--accent)}
 </style>
 </head>
 <body>
@@ -223,24 +237,7 @@ body.is-paused .live-pill{border-color:var(--dim);color:var(--muted);background:
       </div>
     </div>
     <div class="header-right">
-      <div class="theme-panel" title="Theme">
-        <label for="themePreset">Theme</label>
-        <select id="themePreset" onchange="onThemePresetChange()">
-          <option value="default" selected>Red</option>
-          <option value="green">Green</option>
-          <option value="blue">Blue</option>
-          <option value="yellow">Yellow</option>
-          <option value="pink">Pink</option>
-          <option value="orange">Orange</option>
-          <option value="custom">Custom</option>
-        </select>
-        <input type="color" id="themeColorA" value="#ff3333" title="Primary" oninput="applyCustomTheme()">
-        <div class="theme-grad-row" id="gradRow" style="display:none">
-          <label for="themeGrad" style="font-size:8px;color:var(--muted)">Grad</label>
-          <input type="checkbox" id="themeGrad" onchange="applyCustomTheme()">
-          <input type="color" id="themeColorB" value="#ff8800" title="Gradient end" oninput="applyCustomTheme()">
-        </div>
-      </div>
+      <button type="button" class="btn-settings" onclick="openSettings()" title="Settings">⚙ Settings</button>
       <div class="mode-toggle">
         <button class="mode-btn active-mp4" id="mp4Btn" type="button" onclick="setMode('mp4')">🎬 MP4</button>
         <button class="mode-btn" id="mp3Btn" type="button" onclick="setMode('mp3')">🎵 MP3</button>
@@ -255,17 +252,14 @@ body.is-paused .live-pill{border-color:var(--dim);color:var(--muted);background:
     <div class="video-wrap">
       <div id="ytPlayer"></div>
       <div class="mp3-overlay" id="mp3Overlay">
-        <div class="mp3-badge"><div class="mp3-dot"></div>Audio · Deezer embed</div>
-        <p class="mp3-src-note">MP3 mode searches Deezer by the same track title from your YouTube playlist, then plays the embed (no YouTube video ads). Use the player bar below for play/pause.</p>
+        <div class="mp3-badge"><div class="mp3-dot"></div>Audio-only mode</div>
+        <p class="mp3-src-note">Video is hidden; playback uses the same YouTube playlist so play, pause, seek, and ±10s work. The card below shows the current song title.</p>
         <div class="mp3-title-card" id="mp3TitleCard">
           <div class="mp3-title-big" id="mp3TitleBig">Select a track</div>
         </div>
         <div class="mp3-info">
           <div class="mp3-title" id="mp3Title">Gunkirat's Fav Playlist</div>
           <div class="mp3-ch" id="mp3Ch">Select a track to vibe</div>
-        </div>
-        <div class="deezer-frame-wrap">
-          <iframe id="deezerFrame" title="Deezer" allow="encrypted-media; autoplay"></iframe>
         </div>
         <div class="audio-viz" id="audioViz"></div>
       </div>
@@ -357,6 +351,73 @@ body.is-paused .live-pill{border-color:var(--dim);color:var(--muted);background:
 
 </div>
 
+<div class="settings-backdrop" id="settingsBackdrop" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+  <div class="settings-panel" onclick="event.stopPropagation()">
+    <div class="settings-head">
+      <div class="settings-title" id="settingsTitle">Settings</div>
+      <button type="button" class="settings-close" onclick="closeSettings()" aria-label="Close">×</button>
+    </div>
+
+    <div class="settings-section">
+      <span class="settings-label">Theme</span>
+      <div class="settings-row">
+        <label for="themePreset">Preset</label>
+        <select id="themePreset" style="flex:1;min-width:140px;font-size:11px;padding:6px 8px;border-radius:8px;border:0.5px solid var(--border);background:var(--bg2);color:var(--text);font-family:inherit" onchange="onThemePresetChange()">
+          <option value="default" selected>Red</option>
+          <option value="green">Green</option>
+          <option value="blue">Blue</option>
+          <option value="yellow">Yellow</option>
+          <option value="pink">Pink</option>
+          <option value="orange">Orange</option>
+          <option value="custom">Custom</option>
+        </select>
+      </div>
+      <div class="settings-row">
+        <label>Primary</label>
+        <input type="color" id="themeColorA" value="#ff3333" title="Primary" oninput="onThemeColorsChanged()">
+        <label style="min-width:auto">End</label>
+        <input type="color" id="themeColorB" value="#ff8800" title="Gradient end" oninput="onThemeColorsChanged()">
+      </div>
+      <div class="settings-row">
+        <label for="gradIntensity">Gradient</label>
+        <input type="range" id="gradIntensity" min="0" max="100" value="100" oninput="onGradIntensityChange()">
+        <span class="settings-val" id="gradIntensityVal">100%</span>
+      </div>
+      <p class="settings-hint">0% = solid primary color; 100% = full blend to the end color (buttons, bars, glows).</p>
+    </div>
+
+    <div class="settings-section">
+      <span class="settings-label">Display</span>
+      <div class="settings-row">
+        <label for="setBrightness">Brightness</label>
+        <input type="range" id="setBrightness" min="70" max="130" value="100" oninput="applyDisplayTuning()">
+        <span class="settings-val" id="valBrightness">100%</span>
+      </div>
+      <div class="settings-row">
+        <label for="setContrast">Contrast</label>
+        <input type="range" id="setContrast" min="85" max="115" value="100" oninput="applyDisplayTuning()">
+        <span class="settings-val" id="valContrast">100%</span>
+      </div>
+      <div class="settings-row">
+        <label for="setSaturate">Saturation</label>
+        <input type="range" id="setSaturate" min="70" max="130" value="100" oninput="applyDisplayTuning()">
+        <span class="settings-val" id="valSaturate">100%</span>
+      </div>
+      <div class="settings-row">
+        <label for="surfaceBoost">Surfaces</label>
+        <input type="range" id="surfaceBoost" min="80" max="120" value="100" oninput="applySurfaceBoost()">
+        <span class="settings-val" id="valSurface">100%</span>
+      </div>
+      <p class="settings-hint">Surfaces tints panel backgrounds slightly lighter or darker.</p>
+    </div>
+
+    <div class="settings-actions">
+      <button type="button" class="settings-btn" onclick="resetSettings()">Reset all</button>
+      <button type="button" class="settings-btn primary" onclick="closeSettings()">Done</button>
+    </div>
+  </div>
+</div>
+
 <script src="https://www.youtube.com/iframe_api"></script>
 <script>
 const PL_ID = 'PLuXBepVDtfVDfj6bYU3jb5f0bdqE-ljVU';
@@ -366,15 +427,13 @@ let tracks = [];
 let filtered = [];
 let cur = 0;
 let isPlaying = false;
-let mp3Playing = false;
 let isShuffle = false;
 let isRepeat = false;
 let mode = 'mp4';
 let vol = 80;
 let progTimer = null;
 let playerReady = false;
-let deezerTrackId = null;
-let deezerLoadToken = 0;
+let surfaceBoostPct = 100;
 
 const THEME_PRESETS = {
   default: { a: '#ff3333', b: '#ff8800' },
@@ -407,10 +466,20 @@ function hexToRgb(hex) {
   return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 };
 }
 
+function mixHex(a, b, t) {
+  const A = hexToRgb(a);
+  const B = hexToRgb(b);
+  const r = Math.round(A.r + (B.r - A.r) * t);
+  const g = Math.round(A.g + (B.g - A.g) * t);
+  const bl = Math.round(A.b + (B.b - A.b) * t);
+  return '#' + [r, g, bl].map(x => x.toString(16).padStart(2, '0')).join('');
+}
+
 function setSurfacesFromPrimary(primary) {
   const p = hexToRgb(primary);
   const root = document.documentElement;
-  const tint = (k) => Math.min(255, Math.max(0, Math.floor(k)));
+  const boost = (surfaceBoostPct || 100) / 100;
+  const tint = (k) => Math.min(255, Math.max(0, Math.floor(k * boost)));
   const bg = `rgb(${tint(6 + p.r * 0.05)}, ${tint(6 + p.g * 0.05)}, ${tint(6 + p.b * 0.05)})`;
   const bg2 = `rgb(${tint(12 + p.r * 0.07)}, ${tint(11 + p.g * 0.07)}, ${tint(10 + p.b * 0.06)})`;
   const bg3 = `rgb(${tint(18 + p.r * 0.09)}, ${tint(16 + p.g * 0.09)}, ${tint(15 + p.b * 0.08)})`;
@@ -422,6 +491,127 @@ function setSurfacesFromPrimary(primary) {
   root.style.setProperty('--border', border);
   root.style.setProperty('--muted', muted);
 }
+
+function getEffectiveAccent2() {
+  const a = document.getElementById('themeColorA').value;
+  const b = document.getElementById('themeColorB').value;
+  const grad = Number(document.getElementById('gradIntensity').value) / 100;
+  return mixHex(a, b, grad);
+}
+
+function applyThemeColors() {
+  const primary = document.getElementById('themeColorA').value;
+  const secondary = getEffectiveAccent2();
+  setAccentFromHexes(primary, secondary);
+}
+
+function onGradIntensityChange() {
+  const v = document.getElementById('gradIntensity').value;
+  document.getElementById('gradIntensityVal').textContent = v + '%';
+  applyThemeColors();
+  saveSettings();
+}
+
+function onThemeColorsChanged() {
+  document.getElementById('themePreset').value = 'custom';
+  applyThemeColors();
+  saveSettings();
+}
+
+function openSettings() {
+  document.getElementById('settingsBackdrop').classList.add('open');
+}
+
+function closeSettings() {
+  document.getElementById('settingsBackdrop').classList.remove('open');
+  saveSettings();
+}
+
+function applyDisplayTuning() {
+  const br = document.getElementById('setBrightness').value;
+  const ct = document.getElementById('setContrast').value;
+  const sat = document.getElementById('setSaturate').value;
+  document.getElementById('valBrightness').textContent = br + '%';
+  document.getElementById('valContrast').textContent = ct + '%';
+  document.getElementById('valSaturate').textContent = sat + '%';
+  document.getElementById('appWrap').style.filter = 'brightness(' + br + '%) contrast(' + ct + '%) saturate(' + sat + '%)';
+  saveSettings();
+}
+
+function applySurfaceBoost() {
+  const v = Number(document.getElementById('surfaceBoost').value);
+  surfaceBoostPct = v;
+  document.getElementById('valSurface').textContent = v + '%';
+  const primary = document.getElementById('themeColorA').value;
+  setSurfacesFromPrimary(primary);
+  saveSettings();
+}
+
+function resetSettings() {
+  document.getElementById('gradIntensity').value = 100;
+  document.getElementById('gradIntensityVal').textContent = '100%';
+  document.getElementById('setBrightness').value = 100;
+  document.getElementById('setContrast').value = 100;
+  document.getElementById('setSaturate').value = 100;
+  document.getElementById('surfaceBoost').value = 100;
+  surfaceBoostPct = 100;
+  applyDisplayTuning();
+  document.getElementById('themePreset').value = 'default';
+  document.getElementById('themeColorA').value = '#ff3333';
+  document.getElementById('themeColorB').value = '#ff8800';
+  onThemePresetChange();
+  applyDisplayTuning();
+  applySurfaceBoost();
+}
+
+const LS = 'vibeStationSettings';
+function saveSettings() {
+  try {
+    localStorage.setItem(LS, JSON.stringify({
+      preset: document.getElementById('themePreset').value,
+      colorA: document.getElementById('themeColorA').value,
+      colorB: document.getElementById('themeColorB').value,
+      grad: document.getElementById('gradIntensity').value,
+      br: document.getElementById('setBrightness').value,
+      ct: document.getElementById('setContrast').value,
+      sat: document.getElementById('setSaturate').value,
+      surf: document.getElementById('surfaceBoost').value
+    }));
+  } catch (e) {}
+}
+
+function loadSettings() {
+  try {
+    const raw = localStorage.getItem(LS);
+    if (!raw) return false;
+    const s = JSON.parse(raw);
+    if (s.preset) document.getElementById('themePreset').value = s.preset;
+    if (s.colorA) document.getElementById('themeColorA').value = s.colorA;
+    if (s.colorB) document.getElementById('themeColorB').value = s.colorB;
+    if (s.grad != null) {
+      document.getElementById('gradIntensity').value = s.grad;
+      document.getElementById('gradIntensityVal').textContent = s.grad + '%';
+    }
+    if (s.br) document.getElementById('setBrightness').value = s.br;
+    if (s.ct) document.getElementById('setContrast').value = s.ct;
+    if (s.sat) document.getElementById('setSaturate').value = s.sat;
+    if (s.surf != null) {
+      document.getElementById('surfaceBoost').value = s.surf;
+      surfaceBoostPct = Number(s.surf);
+    }
+    applyThemeColors();
+    applyDisplayTuning();
+    applySurfaceBoost();
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
+document.getElementById('settingsBackdrop').addEventListener('click', function() { closeSettings(); });
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') closeSettings();
+});
 
 function setAccentFromHexes(primary, secondary) {
   const p = hexToRgb(primary);
@@ -440,28 +630,18 @@ function setAccentFromHexes(primary, secondary) {
 
 function onThemePresetChange() {
   const preset = document.getElementById('themePreset').value;
-  const gradRow = document.getElementById('gradRow');
   if (preset === 'custom') {
-    gradRow.style.display = 'flex';
-    applyCustomTheme();
+    applyThemeColors();
+    saveSettings();
     return;
   }
-  gradRow.style.display = 'none';
   const t = THEME_PRESETS[preset];
   if (t) {
     document.getElementById('themeColorA').value = t.a;
     document.getElementById('themeColorB').value = t.b;
-    setAccentFromHexes(t.a, t.b);
+    applyThemeColors();
   }
-}
-
-function applyCustomTheme() {
-  const preset = document.getElementById('themePreset').value;
-  if (preset !== 'custom') return;
-  const a = document.getElementById('themeColorA').value;
-  const useGrad = document.getElementById('themeGrad').checked;
-  const b = useGrad ? document.getElementById('themeColorB').value : a;
-  setAccentFromHexes(a, b);
+  saveSettings();
 }
 
 function onYouTubeIframeAPIReady() {
@@ -504,7 +684,6 @@ function onPlayerReady() {
 }
 
 function onStateChange(e) {
-  if (mode === 'mp3') return;
   const S = YT.PlayerState;
   if (e.data === S.PLAYING) {
     setPlaying(true);
@@ -526,7 +705,7 @@ function onPlayerError() {
 }
 
 function syncIndex() {
-  if (!player || !playerReady || mode === 'mp3') return;
+  if (!player || !playerReady) return;
   const idx = player.getPlaylistIndex();
   if (idx >= 0 && idx !== cur) {
     cur = idx;
@@ -550,31 +729,12 @@ function buildTracksFromIds(ids) {
   fetchTitlesInBatches(ids);
 }
 
-async function prefetchDeezerForIndex(idx) {
-  const t = tracks[idx];
-  if (!t || t.deezerId !== undefined) return;
-  try {
-    const q = buildDeezerSearchQuery(t);
-    const res = await deezerJsonp('/search?q=' + encodeURIComponent(q));
-    const list = res && res.data ? res.data : [];
-    if (list.length) {
-      t.deezerId = list[0].id;
-      t.deezerTrackTitle = list[0].title;
-    } else {
-      t.deezerId = null;
-    }
-  } catch (e) {
-    t.deezerId = null;
-  }
-}
-
 async function fetchTitlesInBatches(ids) {
   const BATCH = 5;
   for (let i = 0; i < ids.length; i += BATCH) {
     const batch = ids.slice(i, i + BATCH);
     await Promise.all(batch.map((vid, j) => fetchTitle(vid, i + j)));
     renderList();
-    await Promise.all(batch.map((_, j) => prefetchDeezerForIndex(i + j)));
   }
 }
 
@@ -614,13 +774,8 @@ function showFallback() {
   document.getElementById('plCount').textContent = 'Open YT';
 }
 
-function isMp3Mode() {
-  return document.getElementById('appWrap').classList.contains('mp3-mode');
-}
-
 function renderList() {
   const el = document.getElementById('plList');
-  const mp3 = isMp3Mode();
   if (!filtered.length) {
     el.innerHTML = '<div style="padding:18px;text-align:center;color:#2a2826;font-size:11px">No tracks found</div>';
     return;
@@ -628,9 +783,9 @@ function renderList() {
   el.innerHTML = filtered.map(t => `
     <div class="pl-item ${t.i === cur ? 'active' : ''}" id="ti-${t.i}" onclick="playTrack(${t.i})">
       <div class="pl-num">${t.i === cur ? '▶' : t.i + 1}</div>
-      <div class="pl-thumb ${mp3 ? 'pl-thumb-name' : ''}">
-        ${mp3 ? `<span class="pl-thumb-label">${escapeHtml(t.title)}</span>` : `<img src="${t.thumb}" alt=""
-          onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2250%22 height=%2234%22><rect width=%2250%22 height=%2234%22 fill=%22%23141412%22/><text x=%2225%22 y=%2221%22 text-anchor=%22middle%22 font-size=%2214%22>🎵</text></svg>'">`}
+      <div class="pl-thumb">
+        <img src="${t.thumb}" alt=""
+          onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2250%22 height=%2234%22><rect width=%2250%22 height=%2234%22 fill=%22%23141412%22/><text x=%2225%22 y=%2221%22 text-anchor=%22middle%22 font-size=%2214%22>🎵</text></svg>'">
         <div class="pl-ov">▶</div>
       </div>
       <div class="pl-info">
@@ -651,132 +806,12 @@ function escapeHtml(s) {
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-function deezerJsonp(path) {
-  const cb = 'dz_cb_' + Date.now() + '_' + Math.random().toString(36).slice(2);
-  return new Promise((resolve, reject) => {
-    const t = setTimeout(() => { cleanup(); reject(new Error('timeout')); }, 15000);
-    let script;
-    function cleanup() {
-      clearTimeout(t);
-      try { delete window[cb]; } catch (e) {}
-      if (script && script.parentNode) script.parentNode.removeChild(script);
-    }
-    window[cb] = function(data) {
-      cleanup();
-      resolve(data);
-    };
-    script = document.createElement('script');
-    const sep = path.includes('?') ? '&' : '?';
-    script.src = 'https://api.deezer.com' + path + sep + 'output=jsonp&callback=' + cb;
-    script.onerror = () => { cleanup(); reject(new Error('network')); };
-    document.head.appendChild(script);
-  });
-}
-
-function buildDeezerSearchQuery(t) {
-  const title = (t.title || '').replace(/\s*\[?(official|lyrics|audio|video)\]?.*$/i, '').trim();
-  const artist = (t.ch || '').replace(/ - Topic$/i, '').trim();
-  if (artist && title) return artist + ' ' + title;
-  return title || 'music';
-}
-
-function deezerPlayerUrl(trackId, autoplay) {
-  const ap = autoplay ? 'true' : 'false';
-  return 'https://www.deezer.com/plugins/player?format=classic&autoplay=' + ap +
-    '&playlist=false&width=100%25&height=130&color=ffffff&layout=dark&size=medium&type=tracks&id=' + trackId +
-    '&_t=' + Date.now();
-}
-
-function applyDeezerTrack(t, autoplay) {
-  if (!t.deezerId) {
-    loadDeezerForCurrentTrack(autoplay);
-    return;
-  }
-  deezerTrackId = t.deezerId;
-  const disp = t.deezerTrackTitle || t.title;
-  document.getElementById('mp3Title').textContent = disp;
-  document.getElementById('mp3Ch').textContent = t.ch || 'Deezer';
-  document.getElementById('mp3TitleBig').textContent = t.title;
-  document.getElementById('deezerFrame').src = deezerPlayerUrl(t.deezerId, !!autoplay);
-  setMp3Playing(!!autoplay);
-}
-
-async function loadDeezerForCurrentTrack(autoplay) {
-  const t = tracks[cur];
-  if (!t) return;
-  if (t.deezerId) {
-    applyDeezerTrack(t, autoplay);
-    return;
-  }
-  const q = buildDeezerSearchQuery(t);
-  const token = ++deezerLoadToken;
-  document.getElementById('mp3Ch').textContent = 'Searching Deezer…';
-  document.getElementById('mp3TitleBig').textContent = t.title;
-  try {
-    const res = await deezerJsonp('/search?q=' + encodeURIComponent(q));
-    if (token !== deezerLoadToken) return;
-    const list = res && res.data ? res.data : [];
-    if (!list.length) {
-      deezerTrackId = null;
-      t.deezerId = null;
-      document.getElementById('deezerFrame').src = 'about:blank';
-      document.getElementById('mp3Ch').textContent = 'No Deezer match — try another track';
-      setMp3Playing(false);
-      return;
-    }
-    const tr = list[0];
-    deezerTrackId = tr.id;
-    t.deezerId = tr.id;
-    t.deezerTrackTitle = tr.title;
-    document.getElementById('mp3Title').textContent = tr.title || t.title;
-    document.getElementById('mp3Ch').textContent = (tr.artist && tr.artist.name) ? tr.artist.name : (t.ch || 'Deezer');
-    document.getElementById('mp3TitleBig').textContent = t.title;
-    document.getElementById('deezerFrame').src = deezerPlayerUrl(tr.id, !!autoplay);
-    setMp3Playing(!!autoplay);
-  } catch (e) {
-    if (token !== deezerLoadToken) return;
-    document.getElementById('mp3Ch').textContent = 'Deezer search failed (offline?)';
-    document.getElementById('deezerFrame').src = 'about:blank';
-    setMp3Playing(false);
-  }
-}
-
-function pauseDeezer() {
-  document.getElementById('deezerFrame').src = 'about:blank';
-  setMp3Playing(false);
-}
-
-function setMp3Playing(state) {
-  mp3Playing = state;
-  if (mode !== 'mp3') return;
-  document.getElementById('playBtn').innerHTML = state ? '⏸' : '▶';
-  document.getElementById('playLabel').textContent = state ? 'PAUSE' : 'PLAY';
-  document.getElementById('statusTag').textContent = state ? 'PLAYING' : 'PAUSED';
-  document.getElementById('statusTag').className = 'tag ' + (state ? 'tag-g' : 'tag-gr');
-  document.getElementById('liveText').textContent = state ? 'LIVE' : 'PAUSED';
-  document.body.classList.toggle('is-paused', !state);
-}
-
 function playTrack(idx) {
   if (!tracks.length) return;
   cur = idx;
   renderList();
   scrollToActive();
   updateStrip();
-  if (mode === 'mp3') {
-    if (player && playerReady) {
-      try { player.pauseVideo(); } catch (e) {}
-    }
-    stopProg();
-    setPlayingUiFromYt(false);
-    const t = tracks[cur];
-    if (t && t.deezerId) {
-      applyDeezerTrack(t, true);
-    } else {
-      loadDeezerForCurrentTrack(true);
-    }
-    return;
-  }
   if (!player || !playerReady) return;
   player.playVideoAt(idx);
 }
@@ -796,27 +831,11 @@ function updateStrip() {
   document.getElementById('nowTitle').textContent = t.title;
   document.getElementById('statNum').textContent = (cur + 1) + ' / ' + tracks.length;
   document.getElementById('mp3TitleBig').textContent = t.title;
-  if (mode === 'mp4') {
-    document.getElementById('mp3Title').textContent = t.title;
-    document.getElementById('mp3Ch').textContent = t.ch || 'YouTube';
-  }
+  document.getElementById('mp3Title').textContent = t.title;
+  document.getElementById('mp3Ch').textContent = t.ch || 'YouTube';
 }
 
 function togglePlay() {
-  if (mode === 'mp3') {
-    if (!tracks.length) return;
-    if (mp3Playing) {
-      pauseDeezer();
-    } else {
-      if (deezerTrackId) {
-        document.getElementById('deezerFrame').src = deezerPlayerUrl(deezerTrackId, true);
-        setMp3Playing(true);
-      } else {
-        loadDeezerForCurrentTrack(true);
-      }
-    }
-    return;
-  }
   if (!player || !playerReady) return;
   if (isPlaying) player.pauseVideo();
   else player.playVideo();
@@ -824,7 +843,6 @@ function togglePlay() {
 
 function setPlayingUiFromYt(state) {
   isPlaying = state;
-  if (mode === 'mp3') return;
   document.getElementById('playBtn').innerHTML = state ? '⏸' : '▶';
   document.getElementById('playLabel').textContent = state ? 'PAUSE' : 'PLAY';
   document.getElementById('statusTag').textContent = state ? 'PLAYING' : 'PAUSED';
@@ -835,7 +853,6 @@ function setPlayingUiFromYt(state) {
 
 function setPlaying(state) {
   isPlaying = state;
-  if (mode === 'mp3') return;
   setPlayingUiFromYt(state);
 }
 
@@ -857,7 +874,6 @@ function skipForward() {
 }
 
 function seekRel(s) {
-  if (mode === 'mp3') return;
   if (!player || !playerReady) return;
   player.seekTo(Math.max(0, (player.getCurrentTime() || 0) + s), true);
   const btn = s > 0 ? document.getElementById('seekFwdBtn') : document.getElementById('seekBackBtn');
@@ -867,7 +883,6 @@ function seekRel(s) {
 }
 
 function seekClick(e) {
-  if (mode === 'mp3') return;
   if (!player || !playerReady) return;
   const rect = e.currentTarget.getBoundingClientRect();
   const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
@@ -897,10 +912,9 @@ function openYT() {
 }
 
 function startProg() {
-  if (mode === 'mp3') return;
   stopProg();
   progTimer = setInterval(() => {
-    if (!player || !playerReady || mode === 'mp3') return;
+    if (!player || !playerReady) return;
     const c = player.getCurrentTime() || 0;
     const d = player.getDuration() || 0;
     document.getElementById('progFill').style.width = (d > 0 ? c / d * 100 : 0) + '%';
@@ -922,44 +936,28 @@ function fmt(s) {
 function setMode(m) {
   mode = m;
   const isMP3 = m === 'mp3';
+  const wasPlaying = isPlaying;
   document.getElementById('appWrap').classList.toggle('mp3-mode', isMP3);
   document.getElementById('mp4Btn').className = 'mode-btn' + (!isMP3 ? ' active-mp4' : '');
   document.getElementById('mp3Btn').className = 'mode-btn' + (isMP3 ? ' active-mp3' : '');
   document.getElementById('mp3Overlay').classList.toggle('show', isMP3);
   document.getElementById('modeTag').textContent = isMP3 ? 'MP3' : 'MP4';
   document.getElementById('modeTag').className = 'tag ' + (isMP3 ? 'tag-b' : 'tag-gr');
-  document.getElementById('modeHint').textContent = isMP3 ? '🎵 Deezer audio (no YT ads)' : '🎬 Video mode';
+  document.getElementById('modeHint').textContent = isMP3 ? '🎵 Audio-only (same playlist · controls work)' : '🎬 Video mode';
   document.getElementById('statMode').textContent = isMP3 ? 'MP3 🎵' : 'MP4 🎬';
-  document.getElementById('progTrack').classList.toggle('mp3-locked', isMP3);
   buildAudioViz();
-
-  if (isMP3) {
-    stopProg();
-    if (player && playerReady) {
-      try { player.pauseVideo(); } catch (e) {}
-    }
-    setPlayingUiFromYt(false);
-    document.getElementById('timeNow').textContent = '—';
-    document.getElementById('timeTot').textContent = 'embed';
-    document.getElementById('progFill').style.width = '0%';
-    const t = tracks[cur];
-    if (t && t.deezerId) {
-      applyDeezerTrack(t, true);
-    } else {
-      loadDeezerForCurrentTrack(true);
-    }
-    renderList();
-  } else {
-    pauseDeezer();
-    document.getElementById('timeNow').textContent = '0:00';
-    document.getElementById('timeTot').textContent = '0:00';
-    if (player && playerReady) {
-      player.playVideoAt(cur);
+  updateStrip();
+  if (player && playerReady) {
+    player.playVideoAt(cur);
+    if (wasPlaying) {
       player.playVideo();
+      startProg();
+    } else {
+      player.pauseVideo();
+      stopProg();
     }
-    document.body.classList.remove('is-paused');
-    renderList();
   }
+  renderList();
 }
 
 function filterTracks(q) {
@@ -1023,7 +1021,11 @@ function buildFreq() {
 buildViz('mainViz', 38, 3, 28);
 buildAudioViz();
 buildFreq();
-onThemePresetChange();
+if (!loadSettings()) {
+  onThemePresetChange();
+  applyDisplayTuning();
+  applySurfaceBoost();
+}
 </script>
 </body>
 </html>
