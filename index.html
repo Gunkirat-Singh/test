@@ -417,8 +417,8 @@ body.is-paused .live-pill{border-color:var(--dim);color:var(--muted);background:
       <span class="settings-label">Spotube-style stream</span>
       <div class="settings-row" style="flex-direction:column;align-items:stretch">
         <label for="streamBaseUrl">Stream server base URL</label>
-        <input type="text" id="streamBaseUrl" placeholder="Leave empty if page is served from same server (e.g. http://localhost:3000)" style="width:100%;font-size:11px;padding:8px 10px;border-radius:8px;border:0.5px solid var(--border);background:var(--bg2);color:var(--text);font-family:inherit" onchange="saveStreamBase(); testStreamHealth()">
-        <p class="settings-hint" style="margin-top:8px">Empty = same origin. If you open the HTML file directly, use <code>http://localhost:3000</code> (or your server port). MP3 mode needs the Node server for full-length audio.</p>
+        <input type="text" id="streamBaseUrl" placeholder="Default: https://vibe-station-backend.onrender.com" style="width:100%;font-size:11px;padding:8px 10px;border-radius:8px;border:0.5px solid var(--border);background:var(--bg2);color:var(--text);font-family:inherit" onchange="saveStreamBase(); testStreamHealth()">
+        <p class="settings-hint" style="margin-top:8px">Leave empty to use your default Render backend. MP3 mode needs this server to strip ads and get full-length audio.</p>
         <div id="streamHealth" style="font-size:10px;margin-top:6px;color:var(--muted)"></div>
       </div>
     </div>
@@ -439,10 +439,8 @@ function getStreamBase() {
   if (b === null) b = '';
   b = String(b).trim();
   if (b === '') {
-    if (window.location.protocol === 'file:') {
-      return 'http://localhost:3000';
-    }
-    return '';
+    // HARDCODED FALLBACK URL
+    return 'https://vibe-station-backend.onrender.com';
   }
   return b.replace(/\/$/, '');
 }
