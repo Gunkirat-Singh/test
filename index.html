@@ -253,8 +253,8 @@ body.is-paused .live-pill{border-color:var(--dim);color:var(--muted);background:
     <div class="video-wrap">
       <div id="ytPlayer"></div>
       <div class="mp3-overlay" id="mp3Overlay">
-        <div class="mp3-badge"><div class="mp3-dot"></div>Audio-only mode</div>
-        <p class="mp3-src-note" id="mp3SrcNote">Audio is streamed via <strong>decentralized Piped APIs</strong> to bypass video ads. Artwork fetched natively. No backend required.</p>
+        <div class="mp3-badge"><div class="mp3-dot"></div>Hybrid Fallback Active</div>
+        <p class="mp3-src-note" id="mp3SrcNote">Using native player safely hidden behind the interface to bypass API blocks. Apple Music artwork active.</p>
         <div class="mp3-title-card" id="mp3TitleCard">
           <img id="mp3Art" alt="" width="120" height="120" style="display:none;width:120px;height:120px;border-radius:10px;object-fit:cover;border:1px solid color-mix(in srgb,var(--accent) 25%,transparent);box-shadow:0 8px 24px rgba(0,0,0,0.4)">
           <div class="mp3-title-big" id="mp3TitleBig">Select a track</div>
@@ -385,7 +385,6 @@ body.is-paused .live-pill{border-color:var(--dim);color:var(--muted);background:
         <input type="range" id="gradIntensity" min="0" max="100" value="100" oninput="onGradIntensityChange()">
         <span class="settings-val" id="gradIntensityVal">100%</span>
       </div>
-      <p class="settings-hint">0% = solid primary color; 100% = full blend to the end color (buttons, bars, glows).</p>
     </div>
 
     <div class="settings-section">
@@ -410,14 +409,13 @@ body.is-paused .live-pill{border-color:var(--dim);color:var(--muted);background:
         <input type="range" id="surfaceBoost" min="80" max="120" value="100" oninput="applySurfaceBoost()">
         <span class="settings-val" id="valSurface">100%</span>
       </div>
-      <p class="settings-hint">Surfaces tints panel backgrounds slightly lighter or darker.</p>
     </div>
 
     <div class="settings-section">
-      <span class="settings-label">Spotube-style stream</span>
+      <span class="settings-label">System Architecture</span>
       <div class="settings-row" style="flex-direction:column;align-items:stretch">
-        <p style="font-size:11px;color:var(--green);font-weight:600;margin-bottom:6px">✓ Serverless Engine Active</p>
-        <p class="settings-hint" style="margin-top:0">Audio is currently streamed directly to your browser using decentralized Piped API proxy networks. Album artwork is fetched natively. You do not need a backend server!</p>
+        <p style="font-size:11px;color:var(--green);font-weight:600;margin-bottom:6px">✓ Hybrid Engine Active</p>
+        <p class="settings-hint" style="margin-top:0">Because YouTube blocks most external streams, MP3 mode now uses a flawless hybrid fallback. It plays audio natively behind the MP3 interface to guarantee stability.</p>
       </div>
     </div>
 
@@ -432,28 +430,45 @@ body.is-paused .live-pill{border-color:var(--dim);color:var(--muted);background:
 <script>
 const PL_ID = 'PLuXBepVDtfVDfj6bYU3jb5f0bdqE-ljVU';
 
-// We use an array of public, decentralized APIs to guarantee we don't get blocked by YouTube
+// Decentralized APIs
 const PIPED_INSTANCES = [
   'https://pipedapi.kavin.rocks',
   'https://pipedapi.smnz.de',
-  'https://pipedapi.adminforge.de',
   'https://pipedapi.lunar.icu'
 ];
+
+let player = null;
+let tracks = [];
+let filtered = [];
+let cur = 0;
+let isPlaying = false;
+let isShuffle = false;
+let isRepeat = false;
+let mode = 'mp4';
+let vol = 80;
+let progTimer = null;
+let playerReady = false;
+let surfaceBoostPct = 100;
+
+// THIS is the secret sauce: it flips to true if APIs fail, telling the music to play invisibly.
+let usingYtFallback = false; 
 
 async function getPipedStreamUrl(videoId) {
   for (const api of PIPED_INSTANCES) {
     try {
-      const r = await fetch(`${api}/streams/${videoId}`);
+      // 1.5s timeout per API so it doesn't freeze the app if one is dead
+      const controller = new AbortController();
+      const id = setTimeout(() => controller.abort(), 1500); 
+      const r = await fetch(`${api}/streams/${videoId}`, { signal: controller.signal });
+      clearTimeout(id);
       if (!r.ok) continue;
       const d = await r.json();
       if (d && d.audioStreams && d.audioStreams.length > 0) {
-        // Sort to get the highest quality audio (usually M4A or WEBM)
-        const best = d.audioStreams.sort((a, b) => b.bitrate - a.bitrate)[0];
-        return best.url;
+        return d.audioStreams.sort((a, b) => b.bitrate - a.bitrate)[0].url;
       }
     } catch (e) {}
   }
-  return null; // All instances failed
+  return null;
 }
 
 function pauseYtForMp3() {
@@ -480,12 +495,10 @@ async function trySpotifyArtwork(t) {
   const q = (t.title || '').trim() + ' ' + (t.ch || '').trim();
   if (!q.trim()) return;
   try {
-    // Calling the open iTunes API directly from the browser
     const r = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(q)}&limit=1&entity=song`);
     const d = await r.json();
     if (d.results && d.results.length > 0) {
-      const highRes = d.results[0].artworkUrl100.replace('100x100bb', '600x600bb');
-      art.src = highRes;
+      art.src = d.results[0].artworkUrl100.replace('100x100bb', '600x600bb');
       art.style.display = 'block';
     } else {
       art.removeAttribute('src');
@@ -497,29 +510,36 @@ async function trySpotifyArtwork(t) {
 }
 
 async function loadMp3Stream(autoplay) {
-  const expectedCur = cur; // Lock in the song ID to prevent rapid clicking bugs
+  const expectedCur = cur; 
   const t = tracks[cur];
   if (!t) return;
   const audio = document.getElementById('audioPlayer');
   audio.pause();
   
-  // Show a loading status while the API fetches the proxy
   document.getElementById('statusTag').textContent = 'LOADING...';
   document.getElementById('statusTag').className = 'tag tag-b';
   
   const streamUrl = await getPipedStreamUrl(t.videoId);
   
-  // If user rapidly clicked "Next" before the API finished, stop loading this track
-  if (cur !== expectedCur) return;
+  if (cur !== expectedCur) return; 
   
-  if (!streamUrl) {
-    skipForward(); // Skip the track automatically if YouTube completely blocked it
-    return;
+  if (streamUrl) {
+    // API Success! Stream the raw audio file
+    usingYtFallback = false;
+    pauseYtForMp3();
+    audio.src = streamUrl;
+    audio.volume = vol / 100;
+    if (autoplay) audio.play().catch(() => {});
+  } else {
+    // APIs blocked! Fire up the Hybrid YouTube Fallback
+    usingYtFallback = true;
+    audio.removeAttribute('src');
+    if (player && playerReady) {
+      player.playVideoAt(cur);
+      player.setVolume(vol);
+      if (!autoplay) setTimeout(() => player.pauseVideo(), 500);
+    }
   }
-  
-  audio.src = streamUrl;
-  audio.volume = vol / 100;
-  if (autoplay) audio.play().catch(() => {});
   
   trySpotifyArtwork(t);
   startProg();
@@ -530,13 +550,13 @@ function wireAudioPlayer() {
   if (!audio || audio._wired) return;
   audio._wired = true;
   audio.addEventListener('play', () => {
-    if (mode === 'mp3') setPlaying(true);
+    if (mode === 'mp3' && !usingYtFallback) setPlaying(true);
   });
   audio.addEventListener('pause', () => {
-    if (mode === 'mp3') setPlaying(false);
+    if (mode === 'mp3' && !usingYtFallback) setPlaying(false);
   });
   audio.addEventListener('ended', () => {
-    if (mode !== 'mp3') return;
+    if (mode !== 'mp3' || usingYtFallback) return;
     setPlaying(false);
     stopProg();
     if (isRepeat) {
@@ -547,19 +567,6 @@ function wireAudioPlayer() {
     }
   });
 }
-
-let player = null;
-let tracks = [];
-let filtered = [];
-let cur = 0;
-let isPlaying = false;
-let isShuffle = false;
-let isRepeat = false;
-let mode = 'mp4';
-let vol = 80;
-let progTimer = null;
-let playerReady = false;
-let surfaceBoostPct = 100;
 
 const THEME_PRESETS = {
   default: { a: '#ff3333', b: '#ff8800' },
@@ -811,7 +818,7 @@ function onPlayerReady() {
 }
 
 function onStateChange(e) {
-  if (mode === 'mp3') return;
+  if (mode === 'mp3' && !usingYtFallback) return;
   const S = YT.PlayerState;
   if (e.data === S.PLAYING) {
     setPlaying(true);
@@ -833,13 +840,16 @@ function onPlayerError() {
 }
 
 function syncIndex() {
-  if (mode === 'mp3') return;
+  if (mode === 'mp3' && !usingYtFallback) return;
   if (!player || !playerReady) return;
   const idx = player.getPlaylistIndex();
   if (idx >= 0 && idx !== cur) {
     cur = idx;
     renderList();
     updateStrip();
+    if (mode === 'mp3') {
+      trySpotifyArtwork(tracks[cur]);
+    }
   }
 }
 
@@ -943,7 +953,6 @@ function playTrack(idx) {
   updateStrip();
   if (mode === 'mp3') {
     loadMp3Stream(true);
-    pauseYtForMp3();
     return;
   }
   if (!player || !playerReady) return;
@@ -970,12 +979,11 @@ function updateStrip() {
 }
 
 function togglePlay() {
-  if (mode === 'mp3') {
+  if (mode === 'mp3' && !usingYtFallback) {
     const audio = document.getElementById('audioPlayer');
     if (!tracks.length) return;
     if (!audio.src) {
       loadMp3Stream(true);
-      pauseYtForMp3();
       return;
     }
     if (audio.paused) audio.play().catch(() => {});
@@ -1020,12 +1028,13 @@ function skipForward() {
 }
 
 function seekRel(s) {
-  if (mode === 'mp3') {
+  if (mode === 'mp3' && !usingYtFallback) {
     const audio = document.getElementById('audioPlayer');
     if (!audio || !audio.src) return;
     audio.currentTime = Math.max(0, (audio.currentTime || 0) + s);
-  } else if (!player || !playerReady) return;
-  else player.seekTo(Math.max(0, (player.getCurrentTime() || 0) + s), true);
+  } else if (player && playerReady) {
+    player.seekTo(Math.max(0, (player.getCurrentTime() || 0) + s), true);
+  }
   const btn = s > 0 ? document.getElementById('seekFwdBtn') : document.getElementById('seekBackBtn');
   btn.style.color = 'var(--accent)';
   btn.style.borderColor = 'currentColor';
@@ -1035,7 +1044,7 @@ function seekRel(s) {
 function seekClick(e) {
   const rect = e.currentTarget.getBoundingClientRect();
   const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-  if (mode === 'mp3') {
+  if (mode === 'mp3' && !usingYtFallback) {
     const audio = document.getElementById('audioPlayer');
     if (!audio || !audio.src) return;
     const d = audio.duration;
@@ -1052,7 +1061,7 @@ function volClick(e) {
   vol = Math.round(Math.max(0, Math.min(100, (e.clientX - rect.left) / rect.width * 100)));
   document.getElementById('volFill').style.width = vol + '%';
   document.getElementById('volIcon').textContent = vol === 0 ? '🔇' : vol < 40 ? '🔉' : '🔊';
-  if (mode === 'mp3') {
+  if (mode === 'mp3' && !usingYtFallback) {
     const audio = document.getElementById('audioPlayer');
     if (audio) audio.volume = vol / 100;
     return;
@@ -1077,7 +1086,7 @@ function openYT() {
 function startProg() {
   stopProg();
   progTimer = setInterval(() => {
-    if (mode === 'mp3') {
+    if (mode === 'mp3' && !usingYtFallback) {
       const audio = document.getElementById('audioPlayer');
       if (!audio || !audio.src) return;
       const c = audio.currentTime || 0;
@@ -1117,7 +1126,7 @@ function setMode(m) {
   document.getElementById('modeTag').textContent = isMP3 ? 'MP3' : 'MP4';
   document.getElementById('modeTag').className = 'tag ' + (isMP3 ? 'tag-b' : 'tag-gr');
   document.getElementById('modeHint').textContent = isMP3
-    ? '🎵 Audio streamed via Piped API (Serverless)'
+    ? '🎵 Hybrid Audio Active (Serverless)'
     : '🎬 Video mode';
   document.getElementById('statMode').textContent = isMP3 ? 'MP3 🎵' : 'MP4 🎬';
   buildAudioViz();
@@ -1132,6 +1141,7 @@ function setMode(m) {
     }
   } else {
     stopMp3Audio();
+    usingYtFallback = false; // Reset fallback
     const art = document.getElementById('mp3Art');
     if (art) {
       art.removeAttribute('src');
