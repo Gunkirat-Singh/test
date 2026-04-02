@@ -254,7 +254,7 @@ body.is-paused .live-pill{border-color:var(--dim);color:var(--muted);background:
       <div id="ytPlayer"></div>
       <div class="mp3-overlay" id="mp3Overlay">
         <div class="mp3-badge"><div class="mp3-dot"></div>Audio-only mode</div>
-        <p class="mp3-src-note" id="mp3SrcNote">Audio is streamed from your <strong>local server</strong> (YouTube audio via ytdl — no iframe ads). Run <code>npm start</code> in <code>vibe-station-server</code> and open this page from that server. Optional Spotify artwork uses the Spotube-style metadata API when credentials are set.</p>
+        <p class="mp3-src-note" id="mp3SrcNote">Audio is streamed via <strong>decentralized Piped APIs</strong> to bypass video ads. Artwork fetched natively. No backend required.</p>
         <div class="mp3-title-card" id="mp3TitleCard">
           <img id="mp3Art" alt="" width="120" height="120" style="display:none;width:120px;height:120px;border-radius:10px;object-fit:cover;border:1px solid color-mix(in srgb,var(--accent) 25%,transparent);box-shadow:0 8px 24px rgba(0,0,0,0.4)">
           <div class="mp3-title-big" id="mp3TitleBig">Select a track</div>
@@ -416,10 +416,8 @@ body.is-paused .live-pill{border-color:var(--dim);color:var(--muted);background:
     <div class="settings-section">
       <span class="settings-label">Spotube-style stream</span>
       <div class="settings-row" style="flex-direction:column;align-items:stretch">
-        <label for="streamBaseUrl">Stream server base URL</label>
-        <input type="text" id="streamBaseUrl" placeholder="Default: https://vibe-station-backend.onrender.com" style="width:100%;font-size:11px;padding:8px 10px;border-radius:8px;border:0.5px solid var(--border);background:var(--bg2);color:var(--text);font-family:inherit" onchange="saveStreamBase(); testStreamHealth()">
-        <p class="settings-hint" style="margin-top:8px">Leave empty to use your default Render backend. MP3 mode needs this server to strip ads and get full-length audio.</p>
-        <div id="streamHealth" style="font-size:10px;margin-top:6px;color:var(--muted)"></div>
+        <p style="font-size:11px;color:var(--green);font-weight:600;margin-bottom:6px">✓ Serverless Engine Active</p>
+        <p class="settings-hint" style="margin-top:0">Audio is currently streamed directly to your browser using decentralized Piped API proxy networks. Album artwork is fetched natively. You do not need a backend server!</p>
       </div>
     </div>
 
@@ -434,47 +432,28 @@ body.is-paused .live-pill{border-color:var(--dim);color:var(--muted);background:
 <script>
 const PL_ID = 'PLuXBepVDtfVDfj6bYU3jb5f0bdqE-ljVU';
 
-function getStreamBase() {
-  let b = localStorage.getItem('vibeStreamBase');
-  if (b === null) b = '';
-  b = String(b).trim();
-  if (b === '') {
-    // HARDCODED FALLBACK URL
-    return 'https://vibe-station-backend.onrender.com';
+// We use an array of public, decentralized APIs to guarantee we don't get blocked by YouTube
+const PIPED_INSTANCES = [
+  'https://pipedapi.kavin.rocks',
+  'https://pipedapi.smnz.de',
+  'https://pipedapi.adminforge.de',
+  'https://pipedapi.lunar.icu'
+];
+
+async function getPipedStreamUrl(videoId) {
+  for (const api of PIPED_INSTANCES) {
+    try {
+      const r = await fetch(`${api}/streams/${videoId}`);
+      if (!r.ok) continue;
+      const d = await r.json();
+      if (d && d.audioStreams && d.audioStreams.length > 0) {
+        // Sort to get the highest quality audio (usually M4A or WEBM)
+        const best = d.audioStreams.sort((a, b) => b.bitrate - a.bitrate)[0];
+        return best.url;
+      }
+    } catch (e) {}
   }
-  return b.replace(/\/$/, '');
-}
-
-function saveStreamBase() {
-  const v = document.getElementById('streamBaseUrl').value.trim();
-  localStorage.setItem('vibeStreamBase', v);
-  saveSettings();
-  testStreamHealth();
-}
-
-function streamUrlForVideo(videoId) {
-  return getStreamBase() + '/api/stream/' + encodeURIComponent(videoId);
-}
-
-let streamServerOk = false;
-
-async function testStreamHealth() {
-  const el = document.getElementById('streamHealth');
-  if (!el) return;
-  el.textContent = 'Checking stream server…';
-  try {
-    const r = await fetch(getStreamBase() + '/api/health', { method: 'GET' });
-    const j = r.ok ? await r.json() : null;
-    streamServerOk = !!(r.ok && j && j.ok);
-    el.textContent = streamServerOk
-      ? ('✓ Stream server OK' + (j.spotify ? ' · Spotify metadata enabled' : ''))
-      : '✗ Stream server not reachable — start the Node server for MP3 mode';
-    el.style.color = streamServerOk ? 'var(--green)' : 'var(--muted)';
-  } catch (e) {
-    streamServerOk = false;
-    el.textContent = '✗ Cannot reach stream server (MP3 needs npm start in vibe-station-server)';
-    el.style.color = 'var(--muted)';
-  }
+  return null; // All instances failed
 }
 
 function pauseYtForMp3() {
@@ -501,10 +480,12 @@ async function trySpotifyArtwork(t) {
   const q = (t.title || '').trim() + ' ' + (t.ch || '').trim();
   if (!q.trim()) return;
   try {
-    const r = await fetch(getStreamBase() + '/api/spotify/metadata?' + new URLSearchParams({ q: q.slice(0, 200) }));
+    // Calling the open iTunes API directly from the browser
+    const r = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(q)}&limit=1&entity=song`);
     const d = await r.json();
-    if (d.image) {
-      art.src = d.image;
+    if (d.results && d.results.length > 0) {
+      const highRes = d.results[0].artworkUrl100.replace('100x100bb', '600x600bb');
+      art.src = highRes;
       art.style.display = 'block';
     } else {
       art.removeAttribute('src');
@@ -515,14 +496,31 @@ async function trySpotifyArtwork(t) {
   }
 }
 
-function loadMp3Stream(autoplay) {
+async function loadMp3Stream(autoplay) {
+  const expectedCur = cur; // Lock in the song ID to prevent rapid clicking bugs
   const t = tracks[cur];
   if (!t) return;
   const audio = document.getElementById('audioPlayer');
   audio.pause();
-  audio.src = streamUrlForVideo(t.videoId);
+  
+  // Show a loading status while the API fetches the proxy
+  document.getElementById('statusTag').textContent = 'LOADING...';
+  document.getElementById('statusTag').className = 'tag tag-b';
+  
+  const streamUrl = await getPipedStreamUrl(t.videoId);
+  
+  // If user rapidly clicked "Next" before the API finished, stop loading this track
+  if (cur !== expectedCur) return;
+  
+  if (!streamUrl) {
+    skipForward(); // Skip the track automatically if YouTube completely blocked it
+    return;
+  }
+  
+  audio.src = streamUrl;
   audio.volume = vol / 100;
   if (autoplay) audio.play().catch(() => {});
+  
   trySpotifyArtwork(t);
   startProg();
 }
@@ -695,8 +693,6 @@ function resetSettings() {
 const LS = 'vibeStationSettings';
 function saveSettings() {
   try {
-    const sbEl = document.getElementById('streamBaseUrl');
-    if (sbEl) localStorage.setItem('vibeStreamBase', sbEl.value.trim());
     localStorage.setItem(LS, JSON.stringify({
       preset: document.getElementById('themePreset').value,
       colorA: document.getElementById('themeColorA').value,
@@ -732,8 +728,6 @@ function loadSettings() {
     applyThemeColors();
     applyDisplayTuning();
     applySurfaceBoost();
-    const sb = document.getElementById('streamBaseUrl');
-    if (sb) sb.value = localStorage.getItem('vibeStreamBase') || '';
     return true;
   } catch (e) {
     return false;
@@ -1123,7 +1117,7 @@ function setMode(m) {
   document.getElementById('modeTag').textContent = isMP3 ? 'MP3' : 'MP4';
   document.getElementById('modeTag').className = 'tag ' + (isMP3 ? 'tag-b' : 'tag-gr');
   document.getElementById('modeHint').textContent = isMP3
-    ? '🎵 Audio streamed via server (Spotube-style)'
+    ? '🎵 Audio streamed via Piped API (Serverless)'
     : '🎬 Video mode';
   document.getElementById('statMode').textContent = isMP3 ? 'MP3 🎵' : 'MP4 🎬';
   buildAudioViz();
@@ -1225,10 +1219,7 @@ if (!loadSettings()) {
   applySurfaceBoost();
 }
 (function initStreamUi() {
-  const sb = document.getElementById('streamBaseUrl');
-  if (sb) sb.value = localStorage.getItem('vibeStreamBase') || '';
   wireAudioPlayer();
-  testStreamHealth();
 })();
 </script>
 </body>
