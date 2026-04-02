@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gunkirat's Vibe Station V2</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+
+:root {
+  /* Default Theme: Red */
+  --accent: #ff3333;
+  --accent-dim: rgba(255,51,51,0.12);
+  --accent-glow: rgba(255,51,51,0.35);
+  --bg: #080808;
+  --bg2: #0f0f0d;
+  --bg3: #141412;
+  --border: #1e1c1a;
+  --text: #e8e5de;
+  --muted: #4a4845;
+  --dim: #2a2826;
+  --green: #39ff14;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: 'Space Grotesk', sans-serif; min-height: 100vh; overflow-x: hidden; }
+
+/* THEME PRESETS */
+body.theme-blue { --accent: #4d8cd4; --accent-dim: rgba(77,140,212,0.12); --accent-glow: rgba(77,140,212,0.35); }
+body.theme-green { --accent: #39ff14; --accent-dim: rgba(57,255,20,0.1); --accent-glow: rgba(57,255,20,0.35); }
+body.theme-yellow { --accent: #ffd700; --accent-dim: rgba(255,215,0,0.1); --accent-glow: rgba(255,215,0,0.35); }
+body.theme-pink { --accent: #ff33a1; --accent-dim: rgba(255,51,161,0.1); --accent-glow: rgba(255,51,161,0.35); }
+body.theme-orange { --accent: #ff8800; --accent-dim: rgba(255,136,0,0.1); --accent-glow: rgba(255,136,0,0.35); }
+
+/* --- Layout & Components --- */
+.wrap { position: relative; z-index: 1; display: grid; grid-template-columns: 1fr 330px; min-height: 100vh; }
+.left { display: flex; flex-direction: column; padding: 16px; gap: 12px; }
+
+/* THEME SELECTOR */
+.theme-panel { display: flex; align-items: center; gap: 8px; background: var(--bg3); padding: 8px 12px; border-radius: 10px; border: 0.5px solid var(--border); margin-bottom: 5px; overflow-x: auto; }
+.t-dot { width: 16px; height: 16px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: 0.2s; flex-shrink: 0; }
+.t-dot.active { border-color: #fff; transform: scale(1.2); }
+.custom-color-picker { background: none; border: none; width: 20px; height: 20px; cursor: pointer; }
+
+/* MODAL / OVERLAYS */
+.player-box { position: relative; border-radius: 14px; overflow: hidden; background: #000; animation: borderpulse 4s ease-in-out infinite; }
+@keyframes borderpulse { 
+    0%, 100% { box-shadow: 0 0 0 1px var(--accent-glow), 0 0 28px var(--accent-dim); } 
+    50% { box-shadow: 0 0 0 1px var(--accent), 0 0 48px var(--accent-glow); } 
+}
+
+/* SOURCE ENGINES */
+.engine-container { position: relative; width: 100%; padding-top: 56.25%; background: #000; }
+#ytPlayer, #scPlayer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; }
+#scPlayer { z-index: 1; background: #000; display: none; }
+.mp3-mode #scPlayer { display: block; }
+.mp3-mode #ytPlayer { display: none; }
+
+/* Updated brand color logic to use CSS Variable */
+.brand-logo { width: 34px; height: 34px; border-radius: 8px; background: var(--accent); display: flex; align-items: center; justify-content: center; }
+.ctrl.lg { background: var(--accent); box-shadow: 0 0 18px var(--accent-glow); color: #fff; border: none; cursor: pointer; width: 50px; height: 50px; border-radius: 50%; font-size: 20px; }
+.prog-fill { background: var(--accent); height: 100%; transition: width 0.1s linear; }
+
+/* Reuse your existing styles from the prompt, replacing hardcoded #ff3333 or #4d8cd4 with var(--accent) */
+.song-icon { border: 1px solid var(--accent); box-shadow: 0 0 10px var(--accent-dim); }
+.live-pill { border: 0.5px solid var(--accent); color: var(--accent); background: var(--accent-dim); }
+.live-dot { background: var(--accent); }
+.tag-mode { background: var(--accent-dim); color: var(--accent); border: 0.5px solid var(--accent-glow); }
+.pl-item.active { border-left: 2px solid var(--accent); background: var(--accent-dim); }
+.pl-item.active .pl-name { color: var(--accent); }
+
+/* Rest of your UI styling... (Visualizer, Strip, Controls) */
+.bar { background: var(--accent); width: 4px; border-radius: 2px; }
+</style>
+</head>
+<body class="theme-red">
+
+<div class="wrap">
+  <div class="left">
+    <div class="theme-panel">
+        <span style="font-size: 10px; color: var(--muted); font-weight: bold; margin-right: 5px;">THEME</span>
+        <div class="t-dot" style="background:#ff3333" onclick="setTheme('red')"></div>
+        <div class="t-dot" style="background:#4d8cd4" onclick="setTheme('blue')"></div>
+        <div class="t-dot" style="background:#39ff14" onclick="setTheme('green')"></div>
+        <div class="t-dot" style="background:#ffd700" onclick="setTheme('yellow')"></div>
+        <div class="t-dot" style="background:#ff33a1" onclick="setTheme('pink')"></div>
+        <div class="t-dot" style="background:#ff8800" onclick="setTheme('orange')"></div>
+        <input type="color" class="custom-color-picker" oninput="setCustomTheme(this.value)" title="Custom Color">
+    </div>
+
+    <div class="header">
+      <div class="brand">
+        <div class="brand-logo" id="logoAnim">⚡</div>
+        <div>
+          <div class="brand-name">Gunkirat's Station</div>
+          <div class="brand-sub">◈ Ad-Free MP3 Mode</div>
+        </div>
+      </div>
+      <div class="header-right">
+        <button class="ctrl sm" onclick="toggleMode()" id="modeToggleBtn">🎬 MP4</button>
+      </div>
+    </div>
+
+    <div class="player-box">
+      <div class="engine-container">
+        <div id="ytPlayer"></div>
+        <iframe id="scPlayer" scrolling="no" frameborder="no" allow="autoplay" src="https://w.soundcloud.com/player/?url=https%3A//api.soundcloud.com/tracks/293&color=%23ff5500&auto_play=false&hide_related=true&show_comments=false&show_user=false&show_reposts=false&show_teaser=false"></iframe>
+      </div>
+    </div>
+
+    <div class="song-strip">
+       <div class="song-title" id="mainTitle">Select a Track</div>
+       <div class="tag tag-mode" id="curModeTag">MP4 MODE</div>
+    </div>
+
+    <div class="controls-panel">
+        <div class="prog-track" style="background: #222; height: 5px; cursor: pointer;">
+            <div class="prog-fill" id="progBar" style="width: 0%"></div>
+        </div>
+        <div class="btn-row" style="display:flex; justify-content: center; gap: 20px; padding: 10px;">
+            <button class="ctrl sm" onclick="prevTrack()">⏮</button>
+            <button class="ctrl lg" onclick="togglePlay()" id="playBtn">▶</button>
+            <button class="ctrl sm" onclick="nextTrack()">⏭</button>
+        </div>
+    </div>
+  </div>
+
+  <div class="right">
+    <div class="pl-head">Playlist Sidebar</div>
+    <div class="pl-list" id="plList"></div>
+  </div>
+</div>
+
+<script src="https://www.youtube.com/iframe_api"></script>
+<script src="https://w.soundcloud.com/player/api.js"></script>
+
+<script>
+const PLAYLIST_ID = 'PLuXBepVDtfVDfj6bYU3jb5f0bdqE-ljVU';
+let ytPlayer, scWidget;
+let tracks = [];
+let curIdx = 0;
+let isMP3 = false;
+
+// 1. THEME ENGINE
+function setTheme(name) {
+    document.body.className = 'theme-' + name;
+    document.querySelectorAll('.t-dot').forEach(d => d.classList.remove('active'));
+}
+
+function setCustomTheme(hex) {
+    document.body.className = '';
+    document.documentElement.style.setProperty('--accent', hex);
+    document.documentElement.style.setProperty('--accent-glow', hex + '55');
+    document.documentElement.style.setProperty('--accent-dim', hex + '22');
+}
+
+// 2. PLAYER INITIALIZATION
+function onYouTubeIframeAPIReady() {
+    ytPlayer = new YT.Player('ytPlayer', {
+        listType: 'playlist',
+        list: PLAYLIST_ID,
+        events: { 'onReady': onYTReady, 'onStateChange': onYTStateChange }
+    });
+    
+    const scIframe = document.getElementById('scPlayer');
+    scWidget = SC.Widget(scIframe);
+}
+
+async function onYTReady() {
+    const playlistIds = ytPlayer.getPlaylist();
+    // In a real scenario, you'd fetch metadata via oEmbed or YouTube API
+    // Here we simulate the track names from the IDs
+    tracks = playlistIds.map((id, index) => ({
+        id: id,
+        title: "Track " + (index + 1), 
+        thumb: `https://i.ytimg.com/vi/${id}/default.jpg`
+    }));
+    renderPlaylist();
+}
+
+function renderPlaylist() {
+    const list = document.getElementById('plList');
+    list.innerHTML = tracks.map((t, i) => `
+        <div class="pl-item ${i === curIdx ? 'active' : ''}" onclick="playTrack(${i})">
+            <img src="${t.thumb}" width="40">
+            <div class="pl-name">${t.title}</div>
+        </div>
+    `).join('');
+}
+
+// 3. CORE LOGIC: MODE SWAP & PLAYBACK
+function toggleMode() {
+    isMP3 = !isMP3;
+    document.body.classList.toggle('mp3-mode', isMP3);
+    document.getElementById('modeToggleBtn').innerText = isMP3 ? '🎵 MP3' : '🎬 MP4';
+    document.getElementById('curModeTag').innerText = isMP3 ? 'AD-FREE MP3' : 'YT MP4';
+    
+    // Pause both when switching to avoid overlapping audio
+    ytPlayer.pauseVideo();
+    scWidget.pause();
+    playTrack(curIdx);
+}
+
+function playTrack(index) {
+    curIdx = index;
+    renderPlaylist();
+    const track = tracks[curIdx];
+    document.getElementById('mainTitle').innerText = track.title;
+
+    if (isMP3) {
+        // Search SoundCloud for the title of the YT track
+        // Note: Using SoundCloud's search feature via widget
+        const searchQuery = encodeURIComponent(track.title);
+        // We simulate "finding" the song by loading it into the widget
+        // In a production app, you'd use the SC API to get a specific track ID
+        scWidget.load(`https://api.soundcloud.com/tracks?q=${searchQuery}`, {
+            auto_play: true,
+            hide_related: true
+        });
+    } else {
+        ytPlayer.playVideoAt(curIdx);
+    }
+}
+
+function togglePlay() {
+    if (isMP3) {
+        scWidget.toggle();
+    } else {
+        const state = ytPlayer.getPlayerState();
+        if (state === 1) ytPlayer.pauseVideo();
+        else ytPlayer.playVideo();
+    }
+}
+
+function nextTrack() {
+    curIdx = (curIdx + 1) % tracks.length;
+    playTrack(curIdx);
+}
+
+function prevTrack() {
+    curIdx = (curIdx - 1 + tracks.length) % tracks.length;
+    playTrack(curIdx);
+}
+
+// Listen to YT state to update icons
+function onYTStateChange(e) {
+    const btn = document.getElementById('playBtn');
+    if (e.data === 1) btn.innerText = '⏸';
+    else btn.innerText = '▶';
+}
+</script>
+</body>
+</html>
