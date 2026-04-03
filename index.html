@@ -244,7 +244,6 @@ input:checked+.slider-sw:before{transform:translateX(16px)}
 <div class="ambient"><div class="amb-r"></div><div class="amb-g"></div><div class="amb-b"></div></div>
 <div class="wrap" id="appWrap">
 
-<!-- LEFT -->
 <div class="left">
   <div class="header">
     <div class="brand">
@@ -362,7 +361,6 @@ input:checked+.slider-sw:before{transform:translateX(16px)}
   </div>
 </div>
 
-<!-- RIGHT -->
 <div class="right">
   <div class="pl-head">
     <div class="pl-head-top">
@@ -394,7 +392,6 @@ input:checked+.slider-sw:before{transform:translateX(16px)}
 
 </div>
 
-<!-- SETTINGS PANEL -->
 <div class="s-backdrop" id="sBd" onclick="closeSettings()">
 <div class="s-panel" onclick="event.stopPropagation()">
   <div class="s-head">
@@ -479,18 +476,22 @@ input:checked+.slider-sw:before{transform:translateX(16px)}
 // ═══════════════════════════════════════════════════
 const PL_ID = 'PLuXBepVDtfVDfj6bYU3jb5f0bdqE-ljVU';
 
-// Multiple Piped API instances — race them all, use fastest winner
-const PIPED = [
-  'https://pipedapi.kavin.rocks',
-  'https://pipedapi.smnz.de',
-  'https://pipedapi.adminforge.de',
-  'https://pipedapi.lunar.icu',
-  'https://pipedapi.tokhmi.xyz',
-  'https://pipedapi.moomoo.me',
-  'https://piped-api.privacy.com.de',
-  'https://api.piped.projectsegfau.lt',
-  'https://pipedapi.syncpundit.io',
-  'https://piped.smnz.de/api',
+// ═══════════════════════════════════════════════════
+// AD-FREE MP3 API ENGINES (Invidious & Piped Nodes)
+// ═══════════════════════════════════════════════════
+const API_NODES = [
+  // Invidious instances (Highly reliable for pure audio extraction)
+  { type: 'inv', url: 'https://inv.tux.pizza' },
+  { type: 'inv', url: 'https://invidious.nerdvpn.de' },
+  { type: 'inv', url: 'https://invidious.privacydev.net' },
+  { type: 'inv', url: 'https://invidious.protokolla.fi' },
+  { type: 'inv', url: 'https://invidious.projectsegfau.lt' },
+  // Piped instances
+  { type: 'piped', url: 'https://pipedapi.kavin.rocks' },
+  { type: 'piped', url: 'https://pipedapi.smnz.de' },
+  { type: 'piped', url: 'https://pipedapi.adminforge.de' },
+  { type: 'piped', url: 'https://pipedapi.lunar.icu' },
+  { type: 'piped', url: 'https://pipedapi.tokhmi.xyz' }
 ];
 
 const THEMES = {
@@ -576,22 +577,33 @@ function syncYtIndex() {
 }
 
 // ═══════════════════════════════════════════════════
-// PIPED API — AD-FREE AUDIO ENGINE
+// HYBRID API EXTRACTION — AD-FREE AUDIO ENGINE
 // ═══════════════════════════════════════════════════
-async function fetchPipedStream(videoId) {
-  // Race ALL instances simultaneously — fastest response wins
-  const promises = PIPED.map(api => new Promise((res, rej) => {
+async function fetchAdFreeMP3(videoId) {
+  // Race ALL instances simultaneously — fastest successful MP3 stream wins
+  const promises = API_NODES.map(node => new Promise((res, rej) => {
     const ctrl = new AbortController();
-    const tid = setTimeout(() => { ctrl.abort(); rej('timeout'); }, 4000);
-    fetch(`${api}/streams/${videoId}`, { signal:ctrl.signal })
-      .then(r => { if(!r.ok) throw new Error('!ok'); return r.json(); })
-      .then(d => {
-        clearTimeout(tid);
-        const streams = (d.audioStreams||[]).sort((a,b) => b.bitrate-a.bitrate);
-        if(streams.length) res(streams[0].url);
-        else rej('no-streams');
-      })
-      .catch(err => { clearTimeout(tid); rej(err); });
+    const tid = setTimeout(() => { ctrl.abort(); rej('timeout'); }, 6000); 
+    
+    if (node.type === 'inv') {
+      fetch(`${node.url}/api/v1/videos/${videoId}`, { signal: ctrl.signal })
+        .then(r => { if(!r.ok) throw new Error('!ok'); return r.json(); })
+        .then(d => {
+          clearTimeout(tid);
+          const streams = (d.adaptiveFormats||[]).filter(f => f.type.startsWith('audio/')).sort((a,b) => (b.bitrate||0)-(a.bitrate||0));
+          if(streams.length) res(streams[0].url);
+          else rej('no-streams');
+        }).catch(err => { clearTimeout(tid); rej(err); });
+    } else {
+      fetch(`${node.url}/streams/${videoId}`, { signal: ctrl.signal })
+        .then(r => { if(!r.ok) throw new Error('!ok'); return r.json(); })
+        .then(d => {
+          clearTimeout(tid);
+          const streams = (d.audioStreams||[]).sort((a,b) => b.bitrate-a.bitrate);
+          if(streams.length) res(streams[0].url);
+          else rej('no-streams');
+        }).catch(err => { clearTimeout(tid); rej(err); });
+    }
   }));
 
   try {
@@ -617,11 +629,11 @@ async function loadAudioStream(autoplay) {
   // Mute YT so it doesn't bleed audio
   if(player&&playerReady) { try{ player.setVolume(0); player.pauseVideo(); }catch{} }
 
-  const url = await fetchPipedStream(t.videoId);
+  const url = await fetchAdFreeMP3(t.videoId);
   if(expectedIdx !== myIdx) return; // track changed while fetching
 
   if(url) {
-    // ✅ SUCCESS — pure ad-free audio via Piped
+    // ✅ SUCCESS — pure ad-free audio via Hybrid API Engine
     engineMode = 'piped';
     setEngineBadge('piped','Ad-Free Engine Active');
     document.getElementById('engineNote').textContent = 'Streaming via decentralized proxy · zero ads · zero tracking';
